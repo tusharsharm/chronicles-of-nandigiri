@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chronicles of Nandigiri</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-image: url('https://images.unsplash.com/photo-1598620614514-99fe07f38c92?auto=format&fit=crop&w=1920&q=80');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      font-family: 'Garamond', serif;
+    }
+    .scroll-frame {
+      background: rgba(255, 248, 220, 0.85);
+      border: 10px solid #8B4513;
+      padding: 1rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 0 25px #000000cc;
+    }
+    .dialogue-box {
+      background: #fefae0;
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 2px solid #6b4c2f;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body class="text-gray-900">
+  <div class="min-h-screen flex flex-col items-center justify-center p-8">
+    <div class="scroll-frame max-w-3xl w-full">
+      <h1 class="text-4xl font-bold text-center text-yellow-900 mb-4">Chronicles of Nandigiri</h1>
+      <div class="mb-6">
+        <p class="text-lg">Welcome to the realm of Nandigiri, where ancient prophecies, forgotten magic, and fierce brotherhood weave together the fate of a kingdom. Choose a character to begin your journey:</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <button onclick="talk('Auren Virel')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">Auren Virel</button>
+        <button onclick="talk('Kael Orynn')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">Kael Orynn</button>
+        <button onclick="talk('Thorne Blackroot')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">Thorne Blackroot</button>
+        <button onclick="talk('Brimor the Bold')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">Brimor the Bold</button>
+        <button onclick="talk('Sylvahn Daro')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">Sylvahn Daro</button>
+      </div>
+
+      <div id="dialogue" class="dialogue-box mt-6 hidden"></div>
+    </div>
+  </div>
+
+  <audio autoplay loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/16/audio_c479791dde.mp3?filename=fantasy-epic-117351.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    const dialogues = {
+      'Auren Virel': "'By the light of Aravenhold, I will guard this realm. Speak, traveler — what truth do you seek?'",
+      'Kael Orynn': "'Hmph. Another seeker of forbidden knowledge? Let’s hope your mind can handle the weight.'",
+      'Thorne Blackroot': "*A slight nod. A glimmer of steel.* 'Talk’s cheap. What do you want?'",
+      'Brimor the Bold': "'HA! You look like someone ready to fight beside a legend. Or die trying.'",
+      'Sylvahn Daro': "'The trees whisper your name, wanderer. Will you listen to the wind, or be consumed by it?'"
+    };
+
+    function talk(name) {
+      const box = document.getElementById('dialogue');
+      box.innerText = dialogues[name];
+      box.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
