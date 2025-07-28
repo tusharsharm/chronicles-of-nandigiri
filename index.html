@@ -4,843 +4,964 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chronicles of Nandigiri - RPG</title>
+  <title>Chronicles of Nandigiri - 3D RPG</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body {
-      background-image: url('https://images.unsplash.com/photo-1598620614514-99fe07f38c92?auto=format&fit=crop&w=1920&q=80');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
+      margin: 0;
+      padding: 0;
       font-family: 'Garamond', serif;
-    }
-    .scroll-frame {
-      background: rgba(255, 248, 220, 0.95);
-      border: 10px solid #8B4513;
-      padding: 1rem;
-      border-radius: 1.5rem;
-      box-shadow: 0 0 25px #000000cc;
-    }
-    .dialogue-box {
-      background: #fefae0;
-      padding: 1rem;
-      border-radius: 1rem;
-      border: 2px solid #6b4c2f;
-      font-style: italic;
-      min-height: 100px;
-    }
-    .stat-bar {
-      background: #4a5568;
-      height: 20px;
-      border-radius: 10px;
+      background: #000;
       overflow: hidden;
     }
-    .stat-fill {
+    
+    #gameCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+    
+    #ui-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
       height: 100%;
-      transition: width 0.3s ease;
+      z-index: 10;
+      pointer-events: none;
     }
-    .hp-fill { background: #e53e3e; }
-    .mp-fill { background: #3182ce; }
-    .exp-fill { background: #38a169; }
-    .location-box {
-      background: #2d3748;
+    
+    .ui-panel {
+      pointer-events: auto;
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #FFD700;
+      border-radius: 10px;
+      padding: 15px;
       color: white;
-      padding: 0.5rem;
-      border-radius: 0.5rem;
-      margin-bottom: 1rem;
+      backdrop-filter: blur(5px);
     }
-    .inventory-item {
-      background: #edf2f7;
-      border: 1px solid #cbd5e0;
-      padding: 0.25rem 0.5rem;
-      margin: 0.25rem;
-      border-radius: 0.25rem;
-      display: inline-block;
-      cursor: pointer;
+    
+    .menu-panel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      border: 3px solid #FFD700;
+      border-radius: 15px;
+      padding: 30px;
+      text-align: center;
+      min-width: 400px;
+      pointer-events: auto;
     }
-    .quest-item {
-      background: #fff5f5;
-      border: 1px solid #feb2b2;
-      padding: 0.5rem;
-      margin: 0.25rem 0;
-      border-radius: 0.5rem;
+    
+    .stats-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 250px;
     }
-    .combat-button {
-      background: #c53030;
+    
+    .minimap-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 200px;
+      height: 200px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid #FFD700;
+      border-radius: 10px;
+    }
+    
+    .controls-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+    
+    .chat-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 300px;
+      height: 150px;
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #FFD700;
+      border-radius: 10px;
+      padding: 10px;
       color: white;
-      padding: 0.5rem 1rem;
-      margin: 0.25rem;
-      border: none;
-      border-radius: 0.5rem;
-      cursor: pointer;
+      overflow-y: auto;
+      font-size: 12px;
     }
-    .combat-button:hover {
-      background: #9c1c1c;
-    }
+    
     .character-card {
       background: rgba(255, 248, 220, 0.95);
       border: 3px solid #8B4513;
       border-radius: 1rem;
       padding: 1rem;
+      margin: 0.5rem;
       transition: all 0.3s ease;
       cursor: pointer;
-      position: relative;
-      overflow: hidden;
+      color: #333;
     }
+    
     .character-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 25px rgba(255, 215, 0, 0.5);
       border-color: #FFD700;
     }
-    .character-image {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
-      border-radius: 0.5rem;
-      margin-bottom: 0.5rem;
-      border: 2px solid #8B4513;
+    
+    .stat-bar {
+      background: #4a5568;
+      height: 15px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 5px 0;
     }
-    .character-placeholder {
-      width: 100%;
-      height: 150px;
-      background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
-      border-radius: 0.5rem;
-      margin-bottom: 0.5rem;
-      border: 2px solid #8B4513;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #666;
-      font-size: 0.8rem;
-      text-align: center;
+    
+    .stat-fill {
+      height: 100%;
+      transition: width 0.3s ease;
     }
-    .character-stats {
-      font-size: 0.75rem;
-      color: #4a5568;
-      margin-top: 0.5rem;
+    
+    .hp-fill { background: #e53e3e; }
+    .mp-fill { background: #3182ce; }
+    .exp-fill { background: #38a169; }
+    
+    .action-button {
+      background: linear-gradient(45deg, #FFD700, #FFA500);
+      color: #000;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
     }
+    
+    .action-button:hover {
+      background: linear-gradient(45deg, #FFA500, #FFD700);
+      transform: scale(1.05);
+    }
+    
+    .combat-button {
+      background: linear-gradient(45deg, #DC143C, #8B0000);
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+      transition: all 0.3s ease;
+    }
+    
+    .combat-button:hover {
+      background: linear-gradient(45deg, #8B0000, #DC143C);
+      transform: scale(1.05);
+    }
+    
+    #crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      border: 2px solid #FFD700;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 15;
+    }
+    
+    .hidden { display: none !important; }
   </style>
 </head>
-<body class="text-gray-900">
-  <div class="min-h-screen flex flex-col items-center justify-center p-8">
-    <div class="scroll-frame max-w-6xl w-full">
-      <h1 class="text-4xl font-bold text-center text-yellow-900 mb-4">Chronicles of Nandigiri</h1>
-      
-      <!-- Game State Display -->
-      <div id="gameState" class="mb-6">
-        <!-- Multiplayer Menu -->
-        <div id="multiplayerMenu" class="multiplayer-menu">
-          <div class="mb-6">
-            <h2 class="text-2xl font-bold mb-4">Choose Game Mode</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <button onclick="startSinglePlayer()" class="bg-blue-600 text-white px-6 py-4 rounded hover:bg-blue-700">
-                <div class="font-bold">Single Player</div>
-                <div class="text-sm">Play alone</div>
-              </button>
-              <button onclick="showMultiplayerOptions()" class="bg-green-600 text-white px-6 py-4 rounded hover:bg-green-700">
-                <div class="font-bold">Multiplayer</div>
-                <div class="text-sm">Play with friends</div>
-              </button>
-            </div>
-          </div>
+<body>
+  <!-- 3D Canvas -->
+  <canvas id="gameCanvas"></canvas>
+  
+  <!-- Crosshair -->
+  <div id="crosshair"></div>
+  
+  <!-- UI Overlay -->
+  <div id="ui-overlay">
+    <!-- Main Menu -->
+    <div id="mainMenu" class="menu-panel">
+      <h1 class="text-4xl font-bold text-yellow-400 mb-6">Chronicles of Nandigiri</h1>
+      <h2 class="text-xl text-white mb-6">3D Fantasy RPG</h2>
+      <div class="space-y-4">
+        <button onclick="startSinglePlayer()" class="action-button w-full">Single Player</button>
+        <button onclick="showMultiplayerMenu()" class="action-button w-full">Multiplayer</button>
+      </div>
+    </div>
+    
+    <!-- Multiplayer Menu -->
+    <div id="multiplayerMenu" class="menu-panel hidden">
+      <h2 class="text-2xl font-bold text-yellow-400 mb-4">Multiplayer</h2>
+      <div class="space-y-4">
+        <button onclick="createRoom()" class="action-button w-full">Create Room</button>
+        <div>
+          <input type="text" id="roomIdInput" placeholder="Enter Room ID" 
+                 class="w-full px-3 py-2 border rounded mb-2 text-black">
+          <button onclick="joinRoom()" class="action-button w-full">Join Room</button>
         </div>
-
-        <!-- Multiplayer Options -->
-        <div id="multiplayerOptions" class="hidden">
-          <div class="mb-6">
-            <h2 class="text-2xl font-bold mb-4">Multiplayer Options</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <button onclick="createRoom()" class="bg-purple-600 text-white px-6 py-4 rounded hover:bg-purple-700">
-                <div class="font-bold">Create Room</div>
-                <div class="text-sm">Start a new game</div>
-              </button>
-              <div>
-                <input type="text" id="roomIdInput" placeholder="Enter Room ID" class="w-full px-3 py-2 border rounded mb-2">
-                <button onclick="joinRoom()" class="bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 w-full">
-                  <div class="font-bold">Join Room</div>
-                </button>
-              </div>
-            </div>
-            <button onclick="backToMainMenu()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Back</button>
+        <button onclick="backToMainMenu()" class="bg-gray-600 text-white px-4 py-2 rounded w-full">Back</button>
+      </div>
+    </div>
+    
+    <!-- Character Selection -->
+    <div id="characterSelect" class="menu-panel hidden">
+      <h2 class="text-2xl font-bold text-yellow-400 mb-4">Choose Your Character</h2>
+      <div id="characterGrid" class="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto"></div>
+    </div>
+    
+    <!-- Game UI -->
+    <div id="gameUI" class="hidden">
+      <!-- Player Stats -->
+      <div class="stats-panel ui-panel">
+        <h3 class="font-bold text-yellow-400 mb-2" id="playerName">Character</h3>
+        <div class="text-sm">
+          <div class="flex justify-between">
+            <span>HP:</span>
+            <span id="hpText">100/100</span>
           </div>
-        </div>
-
-        <!-- Room Lobby -->
-        <div id="roomLobby" class="hidden">
-          <div class="mb-6">
-            <h2 class="text-2xl font-bold mb-4">Room Lobby</h2>
-            <div class="bg-gray-100 p-4 rounded mb-4">
-              <div class="font-bold">Room ID: <span id="currentRoomId" class="text-purple-600"></span></div>
-              <div class="text-sm mt-2">Share this ID with your friends!</div>
-            </div>
-            <div class="mb-4">
-              <h3 class="font-bold mb-2">Players in Room:</h3>
-              <div id="playersInRoom" class="space-y-2"></div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <button onclick="leaveRoom()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Leave Room</button>
-              <button onclick="startMultiplayerGame()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Start Game</button>
-            </div>
+          <div class="stat-bar">
+            <div class="stat-fill hp-fill" id="hpBar" style="width: 100%"></div>
           </div>
-        </div>
-
-        <!-- Character Selection Screen -->
-        <div id="characterSelect" class="character-select hidden">
-          <div class="mb-6">
-            <p class="text-lg">Welcome to the realm of Nandigiri, where ancient prophecies, forgotten magic, and fierce brotherhood weave together the fate of a kingdom. Choose your character to begin your journey:</p>
+          
+          <div class="flex justify-between">
+            <span>MP:</span>
+            <span id="mpText">50/50</span>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="characterGrid">
-            <!-- Characters will be dynamically loaded here -->
+          <div class="stat-bar">
+            <div class="stat-fill mp-fill" id="mpBar" style="width: 100%"></div>
           </div>
-        </div>
-
-        <!-- Main Game Interface -->
-        <div id="gameInterface" class="hidden">
-          <!-- Multiplayer Players Display -->
-          <div id="multiplayerPlayers" class="hidden mb-6">
-            <div class="bg-blue-100 p-4 rounded-lg border-2 border-blue-600">
-              <h3 class="font-bold text-lg mb-2">Other Players</h3>
-              <div id="otherPlayersDisplay" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
-            </div>
+          
+          <div class="flex justify-between">
+            <span>Level:</span>
+            <span id="levelText">1</span>
           </div>
-
-          <!-- Player Stats -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-lg border-2 border-yellow-700">
-              <h3 class="font-bold text-lg mb-2" id="playerName">Character</h3>
-              <div class="mb-2">
-                <div class="flex justify-between">
-                  <span>HP:</span>
-                  <span id="hpText">100/100</span>
-                </div>
-                <div class="stat-bar">
-                  <div class="stat-fill hp-fill" id="hpBar" style="width: 100%"></div>
-                </div>
-              </div>
-              <div class="mb-2">
-                <div class="flex justify-between">
-                  <span>MP:</span>
-                  <span id="mpText">50/50</span>
-                </div>
-                <div class="stat-bar">
-                  <div class="stat-fill mp-fill" id="mpBar" style="width: 100%"></div>
-                </div>
-              </div>
-              <div class="mb-2">
-                <div class="flex justify-between">
-                  <span>Level:</span>
-                  <span id="levelText">1</span>
-                </div>
-                <div class="flex justify-between">
-                  <span>EXP:</span>
-                  <span id="expText">0/100</span>
-                </div>
-                <div class="stat-bar">
-                  <div class="stat-fill exp-fill" id="expBar" style="width: 0%"></div>
-                </div>
-              </div>
-              <div class="text-sm">
-                <div>Gold: <span id="goldText" class="text-yellow-600 font-bold">100</span></div>
-              </div>
-            </div>
-            
-            <!-- Inventory -->
-            <div class="bg-white p-4 rounded-lg border-2 border-yellow-700">
-              <h3 class="font-bold text-lg mb-2">Inventory</h3>
-              <div id="inventory" class="text-sm">
-                <div class="inventory-item">Iron Sword</div>
-                <div class="inventory-item">Health Potion x3</div>
-                <div class="inventory-item">Leather Armor</div>
-              </div>
-            </div>
-            
-            <!-- Quests -->
-            <div class="bg-white p-4 rounded-lg border-2 border-yellow-700">
-              <h3 class="font-bold text-lg mb-2">Quests</h3>
-              <div id="questLog" class="text-sm">
-                <div class="quest-item">
-                  <div class="font-bold">The Missing Artifact</div>
-                  <div>Find the lost Crystal of Aravenhold</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Location and Actions -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <div class="location-box">
-                <h3 class="font-bold text-lg">Current Location</h3>
-                <div id="currentLocation">Village of Aravenhold</div>
-                <div id="locationDescription" class="text-sm mt-2">A peaceful village nestled in the shadow of ancient mountains. The people here speak of strange happenings in the nearby ruins.</div>
-              </div>
-              
-              <!-- Action Buttons -->
-              <div class="grid grid-cols-2 gap-2 mb-4">
-                <button onclick="explore()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Explore</button>
-                <button onclick="rest()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Rest</button>
-                <button onclick="shop()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Shop</button>
-                <button onclick="travel()" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">Travel</button>
-              </div>
-            </div>
-            
-            <!-- Combat Interface -->
-            <div id="combatInterface" class="hidden">
-              <div class="bg-red-100 p-4 rounded-lg border-2 border-red-600">
-                <h3 class="font-bold text-lg text-red-700 mb-2">Combat!</h3>
-                <div id="enemyInfo" class="mb-4">
-                  <div class="font-bold" id="enemyName">Goblin</div>
-                  <div class="flex justify-between">
-                    <span>Enemy HP:</span>
-                    <span id="enemyHp">30/30</span>
-                  </div>
-                  <div class="stat-bar">
-                    <div class="stat-fill hp-fill" id="enemyHpBar" style="width: 100%"></div>
-                  </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                  <button onclick="attack()" class="combat-button">Attack</button>
-                  <button onclick="useSkill()" class="combat-button">Use Skill</button>
-                  <button onclick="useItem()" class="combat-button">Use Item</button>
-                  <button onclick="flee()" class="combat-button">Flee</button>
-                </div>
-              </div>
-            </div>
+          <div class="flex justify-between">
+            <span>Gold:</span>
+            <span id="goldText" class="text-yellow-400">100</span>
           </div>
         </div>
       </div>
-
-      <!-- Dialogue Box -->
-      <div id="dialogue" class="dialogue-box">
-        Welcome to Chronicles of Nandigiri! Choose your character to begin your adventure.
+      
+      <!-- Minimap -->
+      <div class="minimap-panel ui-panel">
+        <canvas id="minimapCanvas" width="180" height="180"></canvas>
+      </div>
+      
+      <!-- Controls -->
+      <div class="controls-panel">
+        <button onclick="explore()" class="action-button">Explore (E)</button>
+        <button onclick="rest()" class="action-button">Rest (R)</button>
+        <button onclick="openInventory()" class="action-button">Inventory (I)</button>
+        <button onclick="toggleMap()" class="action-button">Map (M)</button>
+      </div>
+      
+      <!-- Chat Panel -->
+      <div class="chat-panel" id="chatPanel">
+        <div id="chatMessages"></div>
+        <input type="text" id="chatInput" placeholder="Type a message..." 
+               class="w-full mt-2 px-2 py-1 text-black rounded" 
+               onkeypress="handleChatInput(event)">
+      </div>
+    </div>
+    
+    <!-- Combat UI -->
+    <div id="combatUI" class="hidden">
+      <div class="menu-panel">
+        <h3 class="text-xl font-bold text-red-400 mb-4">Combat!</h3>
+        <div id="enemyInfo" class="mb-4">
+          <div class="font-bold" id="enemyName">Enemy</div>
+          <div class="flex justify-between">
+            <span>HP:</span>
+            <span id="enemyHp">100/100</span>
+          </div>
+          <div class="stat-bar">
+            <div class="stat-fill hp-fill" id="enemyHpBar" style="width: 100%"></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="attack()" class="combat-button">Attack</button>
+          <button onclick="useSkill()" class="combat-button">Use Skill</button>
+          <button onclick="useItem()" class="combat-button">Use Item</button>
+          <button onclick="flee()" class="combat-button">Flee</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Inventory Modal -->
+    <div id="inventoryModal" class="hidden">
+      <div class="menu-panel">
+        <h3 class="text-xl font-bold text-yellow-400 mb-4">Inventory</h3>
+        <div id="inventoryGrid" class="grid grid-cols-4 gap-2 mb-4"></div>
+        <button onclick="closeInventory()" class="action-button w-full">Close</button>
       </div>
     </div>
   </div>
-
-  <audio autoplay loop>
-    <source src="https://cdn.pixabay.com/download/audio/2022/03/16/audio_c479791dde.mp3?filename=fantasy-epic-117351.mp3" type="audio/mpeg">
-    Your browser does not support the audio element.
-  </audio>
-
+  
   <script src="/socket.io/socket.io.js"></script>
   <script src="characters.js"></script>
   <script>
-    // Multiplayer state
-    let socket = null;
-    let currentRoom = null;
-    let otherPlayers = [];
-    let isMultiplayer = false;
-
-    // Game State
+    // 3D Scene Setup
+    let scene, camera, renderer, controls;
+    let player, players = {};
+    let world = {};
     let gameState = {
+      mode: 'menu', // menu, playing, combat
       player: null,
-      location: 'Village of Aravenhold',
+      location: 'Village',
       inCombat: false,
-      currentEnemy: null,
-      quests: [
-        { name: 'The Missing Artifact', description: 'Find the lost Crystal of Aravenhold', completed: false }
-      ]
+      currentEnemy: null
     };
-
-    // Character Classes (loaded from characters.js)
-    const characters = characterDatabase;
-
-    const enemies = {
-      'Goblin': { name: 'Goblin', hp: 30, maxHp: 30, attack: 8, defense: 3, exp: 25, gold: 15 },
-      'Orc': { name: 'Orc', hp: 60, maxHp: 60, attack: 12, defense: 6, exp: 50, gold: 30 },
-      'Skeleton': { name: 'Skeleton', hp: 40, maxHp: 40, attack: 10, defense: 5, exp: 35, gold: 20 },
-      'Dark Mage': { name: 'Dark Mage', hp: 50, maxHp: 50, attack: 15, defense: 4, exp: 75, gold: 50 }
-    };
-
-    const locations = {
-      'Village of Aravenhold': {
-        name: 'Village of Aravenhold',
-        description: 'A peaceful village nestled in the shadow of ancient mountains. The people here speak of strange happenings in the nearby ruins.',
-        canShop: true,
-        enemies: ['Goblin']
-      },
-      'Ancient Ruins': {
-        name: 'Ancient Ruins',
-        description: 'Crumbling stone structures covered in mysterious runes. Dark magic seems to emanate from the deeper chambers.',
-        canShop: false,
-        enemies: ['Skeleton', 'Dark Mage']
-      },
-      'Forest Path': {
-        name: 'Forest Path',
-        description: 'A winding path through dense woodland. Strange sounds echo from the shadows between the trees.',
-        canShop: false,
-        enemies: ['Goblin', 'Orc']
-      }
-    };
-
-    function selectCharacter(name) {
-      gameState.player = { ...characters[name] };
-      updateDisplay('character-selected');
-      document.getElementById('characterSelect').classList.add('hidden');
-      document.getElementById('gameInterface').classList.remove('hidden');
-      updatePlayerDisplay();
-      updateDialogue(`You have chosen ${name}, the ${gameState.player.class}. Your journey begins in the Village of Aravenhold. What will you do first?`);
+    
+    // Multiplayer
+    let socket = null;
+    let isMultiplayer = false;
+    let currentRoom = null;
+    
+    // Input handling
+    const keys = {};
+    let mouseX = 0, mouseY = 0;
+    
+    function initializeGame() {
+      setupScene();
+      setupControls();
+      createWorld();
+      animate();
+      
+      // Show main menu
+      showMainMenu();
     }
-
-    function updatePlayerDisplay() {
-      const player = gameState.player;
-      document.getElementById('playerName').textContent = `${player.name} (Level ${player.level} ${player.class})`;
-      document.getElementById('hpText').textContent = `${player.hp}/${player.maxHp}`;
-      document.getElementById('mpText').textContent = `${player.mp}/${player.maxMp}`;
-      document.getElementById('levelText').textContent = player.level;
-      document.getElementById('expText').textContent = `${player.exp}/${player.expToNext}`;
-      document.getElementById('goldText').textContent = player.gold;
+    
+    function setupScene() {
+      // Scene
+      scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x87CEEB, 50, 200);
       
-      // Update bars
-      document.getElementById('hpBar').style.width = `${(player.hp / player.maxHp) * 100}%`;
-      document.getElementById('mpBar').style.width = `${(player.mp / player.maxMp) * 100}%`;
-      document.getElementById('expBar').style.width = `${(player.exp / player.expToNext) * 100}%`;
+      // Camera
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 10, 20);
       
-      // Update inventory
-      const inventory = document.getElementById('inventory');
-      inventory.innerHTML = '';
-      const itemCounts = {};
-      player.inventory.forEach(item => {
-        itemCounts[item] = (itemCounts[item] || 0) + 1;
+      // Renderer
+      const canvas = document.getElementById('gameCanvas');
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(50, 50, 50);
+      directionalLight.castShadow = true;
+      directionalLight.shadow.mapSize.width = 2048;
+      directionalLight.shadow.mapSize.height = 2048;
+      scene.add(directionalLight);
+      
+      // Controls
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2.2;
+      controls.minDistance = 5;
+      controls.maxDistance = 50;
+    }
+    
+    function setupControls() {
+      document.addEventListener('keydown', (event) => {
+        keys[event.code] = true;
+        handleKeyPress(event);
       });
       
-      Object.entries(itemCounts).forEach(([item, count]) => {
-        const div = document.createElement('div');
-        div.className = 'inventory-item';
-        div.textContent = count > 1 ? `${item} x${count}` : item;
-        inventory.appendChild(div);
+      document.addEventListener('keyup', (event) => {
+        keys[event.code] = false;
       });
-    }
-
-    function updateDialogue(text) {
-      document.getElementById('dialogue').textContent = text;
-    }
-
-    function explore() {
-      const location = locations[gameState.location];
-      const randomEvent = Math.random();
       
-      if (randomEvent < 0.4) {
-        // Combat encounter
-        const enemyTypes = location.enemies;
-        const enemyType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
-        startCombat(enemyType);
-        broadcastAction('explore', `encountered a ${enemyType}`);
-      } else if (randomEvent < 0.7) {
-        // Find item or gold
-        const foundGold = Math.floor(Math.random() * 20) + 5;
-        gameState.player.gold += foundGold;
-        updatePlayerDisplay();
-        updateDialogue(`You found ${foundGold} gold while exploring!`);
-        broadcastAction('explore', `found ${foundGold} gold`);
-      } else {
-        // Story event
-        updateDialogue('You explore the area but find nothing of interest. Perhaps you should try somewhere else.');
-        broadcastAction('explore', 'found nothing interesting');
+      document.addEventListener('mousemove', (event) => {
+        mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+        mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+      });
+      
+      window.addEventListener('resize', onWindowResize);
+    }
+    
+    function createWorld() {
+      // Ground
+      const groundGeometry = new THREE.PlaneGeometry(200, 200);
+      const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x90EE90 });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      scene.add(ground);
+      
+      // Village buildings
+      createBuildings();
+      
+      // Trees
+      createTrees();
+      
+      // Mountains in background
+      createMountains();
+      
+      // Sky
+      const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
+      const skyMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x87CEEB, 
+        side: THREE.BackSide 
+      });
+      const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+      scene.add(sky);
+    }
+    
+    function createBuildings() {
+      // Village inn
+      const innGeometry = new THREE.BoxGeometry(8, 6, 10);
+      const innMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+      const inn = new THREE.Mesh(innGeometry, innMaterial);
+      inn.position.set(-15, 3, -10);
+      inn.castShadow = true;
+      scene.add(inn);
+      
+      // Inn roof
+      const roofGeometry = new THREE.ConeGeometry(7, 3, 4);
+      const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 });
+      const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+      roof.position.set(-15, 7.5, -10);
+      roof.rotation.y = Math.PI / 4;
+      scene.add(roof);
+      
+      // Shop
+      const shopGeometry = new THREE.BoxGeometry(6, 5, 8);
+      const shopMaterial = new THREE.MeshLambertMaterial({ color: 0xDEB887 });
+      const shop = new THREE.Mesh(shopGeometry, shopMaterial);
+      shop.position.set(15, 2.5, -15);
+      shop.castShadow = true;
+      scene.add(shop);
+      
+      // Houses
+      for (let i = 0; i < 5; i++) {
+        const houseGeometry = new THREE.BoxGeometry(4, 4, 6);
+        const houseMaterial = new THREE.MeshLambertMaterial({ 
+          color: new THREE.Color().setHSL(Math.random() * 0.1 + 0.1, 0.5, 0.6) 
+        });
+        const house = new THREE.Mesh(houseGeometry, houseMaterial);
+        house.position.set(
+          (Math.random() - 0.5) * 60,
+          2,
+          (Math.random() - 0.5) * 60
+        );
+        house.castShadow = true;
+        scene.add(house);
       }
     }
-
-    function rest() {
-      if (gameState.player.gold >= 10) {
-        gameState.player.hp = gameState.player.maxHp;
-        gameState.player.mp = gameState.player.maxMp;
-        gameState.player.gold -= 10;
-        updatePlayerDisplay();
-        updateDialogue('You rest at the local inn. Your HP and MP are fully restored! (Cost: 10 gold)');
-      } else {
-        updateDialogue('You don\'t have enough gold to rest at the inn. (Cost: 10 gold)');
-      }
-    }
-
-    function shop() {
-      const location = locations[gameState.location];
-      if (location.canShop) {
-        updateDialogue('Shop: Health Potion (20g) - Mana Potion (15g) - Better Weapon (100g). Say what you want to buy!');
-      } else {
-        updateDialogue('There are no shops in this location.');
-      }
-    }
-
-    function travel() {
-      const locationNames = Object.keys(locations);
-      const otherLocations = locationNames.filter(loc => loc !== gameState.location);
-      const newLocation = otherLocations[Math.floor(Math.random() * otherLocations.length)];
-      
-      gameState.location = newLocation;
-      const location = locations[newLocation];
-      document.getElementById('currentLocation').textContent = location.name;
-      document.getElementById('locationDescription').textContent = location.description;
-      
-      updateDialogue(`You travel to ${location.name}. ${location.description}`);
-      broadcastAction('travel', `traveled to ${location.name}`);
-    }
-
-    function startCombat(enemyType) {
-      gameState.inCombat = true;
-      gameState.currentEnemy = { ...enemies[enemyType] };
-      
-      document.getElementById('combatInterface').classList.remove('hidden');
-      document.getElementById('enemyName').textContent = gameState.currentEnemy.name;
-      updateEnemyDisplay();
-      
-      updateDialogue(`A ${gameState.currentEnemy.name} appears! Prepare for battle!`);
-    }
-
-    function updateEnemyDisplay() {
-      const enemy = gameState.currentEnemy;
-      document.getElementById('enemyHp').textContent = `${enemy.hp}/${enemy.maxHp}`;
-      document.getElementById('enemyHpBar').style.width = `${(enemy.hp / enemy.maxHp) * 100}%`;
-    }
-
-    function attack() {
-      if (!gameState.inCombat) return;
-      
-      const player = gameState.player;
-      const enemy = gameState.currentEnemy;
-      
-      // Player attacks
-      const damage = Math.max(1, player.attack - enemy.defense + Math.floor(Math.random() * 5));
-      enemy.hp -= damage;
-      
-      let message = `You attack for ${damage} damage! `;
-      
-      if (enemy.hp <= 0) {
-        // Enemy defeated
-        message += `${enemy.name} is defeated! `;
-        player.exp += enemy.exp;
-        player.gold += enemy.gold;
-        message += `You gain ${enemy.exp} EXP and ${enemy.gold} gold!`;
+    
+    function createTrees() {
+      for (let i = 0; i < 30; i++) {
+        // Tree trunk
+        const trunkGeometry = new THREE.CylinderGeometry(0.5, 0.8, 6);
+        const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+        const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
         
-        // Check for level up
-        if (player.exp >= player.expToNext) {
-          player.level++;
-          player.exp -= player.expToNext;
-          player.expToNext = Math.floor(player.expToNext * 1.5);
-          player.maxHp += 10;
-          player.hp = player.maxHp;
-          player.maxMp += 5;
-          player.mp = player.maxMp;
-          message += ` Level up! You are now level ${player.level}!`;
-        }
+        // Tree leaves
+        const leavesGeometry = new THREE.SphereGeometry(3, 8, 6);
+        const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+        const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+        leaves.position.y = 5;
         
-        endCombat();
-      } else {
-        // Enemy attacks back
-        const enemyDamage = Math.max(1, enemy.attack - player.defense + Math.floor(Math.random() * 3));
-        player.hp -= enemyDamage;
-        message += `${enemy.name} attacks you for ${enemyDamage} damage!`;
+        const tree = new THREE.Group();
+        tree.add(trunk);
+        tree.add(leaves);
         
-        if (player.hp <= 0) {
-          message += ' You have been defeated!';
-          player.hp = 1;
-          player.gold = Math.floor(player.gold * 0.8);
-          endCombat();
-        }
+        tree.position.set(
+          (Math.random() - 0.5) * 180,
+          3,
+          (Math.random() - 0.5) * 180
+        );
+        
+        trunk.castShadow = true;
+        leaves.castShadow = true;
+        scene.add(tree);
       }
-      
-      updatePlayerDisplay();
-      updateEnemyDisplay();
-      updateDialogue(message);
     }
-
-    function useSkill() {
-      if (!gameState.inCombat) return;
-      
-      const player = gameState.player;
-      const skills = player.skills;
-      
-      if (player.mp < 10) {
-        updateDialogue('Not enough MP to use a skill!');
-        return;
-      }
-      
-      player.mp -= 10;
-      const skill = skills[Math.floor(Math.random() * skills.length)];
-      
-      let message = `You use ${skill}! `;
-      
-      if (skill.includes('Heal') || skill.includes('Blessing')) {
-        const healing = Math.floor(Math.random() * 20) + 15;
-        player.hp = Math.min(player.maxHp, player.hp + healing);
-        message += `You recover ${healing} HP!`;
-      } else {
-        const damage = Math.floor(Math.random() * 15) + player.attack;
-        gameState.currentEnemy.hp -= damage;
-        message += `${skill} deals ${damage} damage!`;
+    
+    function createMountains() {
+      for (let i = 0; i < 8; i++) {
+        const mountainGeometry = new THREE.ConeGeometry(
+          Math.random() * 15 + 10,
+          Math.random() * 20 + 20,
+          8
+        );
+        const mountainMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
+        const mountain = new THREE.Mesh(mountainGeometry, mountainMaterial);
         
-        if (gameState.currentEnemy.hp <= 0) {
-          message += ` ${gameState.currentEnemy.name} is defeated!`;
-          endCombat();
+        const angle = (i / 8) * Math.PI * 2;
+        mountain.position.set(
+          Math.cos(angle) * 150,
+          10,
+          Math.sin(angle) * 150
+        );
+        
+        scene.add(mountain);
+      }
+    }
+    
+    function createPlayer(characterData) {
+      // Player model (simple for now)
+      const playerGeometry = new THREE.CapsuleGeometry(1, 2);
+      const playerMaterial = new THREE.MeshLambertMaterial({ color: 0x0000ff });
+      player = new THREE.Mesh(playerGeometry, playerMaterial);
+      player.position.set(0, 2, 0);
+      player.castShadow = true;
+      scene.add(player);
+      
+      // Camera follow
+      controls.target.copy(player.position);
+      camera.position.set(player.position.x, player.position.y + 10, player.position.z + 20);
+    }
+    
+    function updatePlayer() {
+      if (!player || gameState.mode !== 'playing') return;
+      
+      const moveSpeed = 0.2;
+      const moveVector = new THREE.Vector3();
+      
+      if (keys['KeyW'] || keys['ArrowUp']) moveVector.z -= moveSpeed;
+      if (keys['KeyS'] || keys['ArrowDown']) moveVector.z += moveSpeed;
+      if (keys['KeyA'] || keys['ArrowLeft']) moveVector.x -= moveSpeed;
+      if (keys['KeyD'] || keys['ArrowRight']) moveVector.x += moveSpeed;
+      
+      if (moveVector.length() > 0) {
+        player.position.add(moveVector);
+        controls.target.copy(player.position);
+        
+        // Broadcast position to other players
+        if (isMultiplayer && socket) {
+          socket.emit('player-move', {
+            position: player.position,
+            rotation: player.rotation
+          });
         }
       }
-      
-      updatePlayerDisplay();
-      updateEnemyDisplay();
-      updateDialogue(message);
     }
-
-    function useItem() {
-      if (!gameState.inCombat) return;
+    
+    function handleKeyPress(event) {
+      if (gameState.mode !== 'playing') return;
       
-      const player = gameState.player;
-      const potions = player.inventory.filter(item => item.includes('Potion') || item.includes('Herb'));
-      
-      if (potions.length === 0) {
-        updateDialogue('No usable items in combat!');
-        return;
-      }
-      
-      const item = potions[0];
-      const index = player.inventory.indexOf(item);
-      player.inventory.splice(index, 1);
-      
-      if (item.includes('Health') || item.includes('Healing')) {
-        const healing = Math.floor(Math.random() * 30) + 20;
-        player.hp = Math.min(player.maxHp, player.hp + healing);
-        updateDialogue(`You use ${item} and recover ${healing} HP!`);
-      } else if (item.includes('Mana')) {
-        const manaRestore = Math.floor(Math.random() * 20) + 15;
-        player.mp = Math.min(player.maxMp, player.mp + manaRestore);
-        updateDialogue(`You use ${item} and recover ${manaRestore} MP!`);
-      }
-      
-      updatePlayerDisplay();
-    }
-
-    function flee() {
-      if (Math.random() < 0.7) {
-        updateDialogue('You successfully flee from combat!');
-        endCombat();
-      } else {
-        updateDialogue('You failed to escape! The enemy attacks!');
-        // Enemy gets a free attack
-        const enemyDamage = Math.max(1, gameState.currentEnemy.attack - gameState.player.defense);
-        gameState.player.hp -= enemyDamage;
-        updatePlayerDisplay();
+      switch(event.code) {
+        case 'KeyE':
+          explore();
+          break;
+        case 'KeyR':
+          rest();
+          break;
+        case 'KeyI':
+          openInventory();
+          break;
+        case 'KeyM':
+          toggleMap();
+          break;
+        case 'Space':
+          event.preventDefault();
+          jump();
+          break;
       }
     }
-
-    function endCombat() {
-      gameState.inCombat = false;
-      gameState.currentEnemy = null;
-      document.getElementById('combatInterface').classList.add('hidden');
+    
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      updatePlayer();
+      controls.update();
+      
+      renderer.render(scene, camera);
+      updateMinimap();
     }
-
-    // Multiplayer Functions
-    function initializeSocket() {
-      socket = io();
+    
+    function updateMinimap() {
+      const canvas = document.getElementById('minimapCanvas');
+      if (!canvas) return;
       
-      socket.on('room-created', (data) => {
-        currentRoom = data.roomId;
-        document.getElementById('currentRoomId').textContent = currentRoom;
-        showRoomLobby();
-        updateDialogue(`Room ${currentRoom} created! Share this ID with your friends.`);
-      });
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#2a4d3a';
+      ctx.fillRect(0, 0, 180, 180);
       
-      socket.on('room-joined', (data) => {
-        currentRoom = data.roomId;
-        document.getElementById('currentRoomId').textContent = currentRoom;
-        updatePlayersInRoom(data.players);
-        showRoomLobby();
-        updateDialogue(`Joined room ${currentRoom}!`);
-      });
+      // Draw player
+      if (player) {
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(90 + player.position.x, 90 + player.position.z, 3, 0, 2 * Math.PI);
+        ctx.fill();
+      }
       
-      socket.on('room-error', (data) => {
-        updateDialogue(`Error: ${data.message}`);
-      });
-      
-      socket.on('player-joined', (data) => {
-        updatePlayersInRoom(data.players);
-        updateDialogue(`${data.newPlayer.name} joined the room!`);
-      });
-      
-      socket.on('player-left', (data) => {
-        updatePlayersInRoom(data.players);
-        updateDialogue('A player left the room.');
-      });
-      
-      socket.on('player-action-update', (data) => {
-        updateDialogue(`${getPlayerName(data.socketId)} performed action: ${data.action}`);
-        updateOtherPlayersDisplay();
-      });
-      
-      socket.on('combat-update', (data) => {
-        updateDialogue(`${getPlayerName(data.socketId)} is in combat!`);
+      // Draw other players
+      Object.values(players).forEach(otherPlayer => {
+        ctx.fillStyle = '#FF6B6B';
+        ctx.beginPath();
+        ctx.arc(90 + otherPlayer.position.x, 90 + otherPlayer.position.z, 2, 0, 2 * Math.PI);
+        ctx.fill();
       });
     }
-
+    
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    // UI Functions
+    function showMainMenu() {
+      hideAllPanels();
+      document.getElementById('mainMenu').classList.remove('hidden');
+      gameState.mode = 'menu';
+    }
+    
+    function showMultiplayerMenu() {
+      hideAllPanels();
+      document.getElementById('multiplayerMenu').classList.remove('hidden');
+    }
+    
+    function backToMainMenu() {
+      showMainMenu();
+    }
+    
+    function showCharacterSelect() {
+      hideAllPanels();
+      document.getElementById('characterSelect').classList.remove('hidden');
+      loadCharacterGrid();
+    }
+    
+    function showGameUI() {
+      hideAllPanels();
+      document.getElementById('gameUI').classList.remove('hidden');
+      gameState.mode = 'playing';
+    }
+    
+    function hideAllPanels() {
+      const panels = ['mainMenu', 'multiplayerMenu', 'characterSelect', 'gameUI', 'combatUI', 'inventoryModal'];
+      panels.forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+    }
+    
     function startSinglePlayer() {
       isMultiplayer = false;
       showCharacterSelect();
     }
-
-    function showMultiplayerOptions() {
-      initializeSocket();
-      document.getElementById('multiplayerMenu').classList.add('hidden');
-      document.getElementById('multiplayerOptions').classList.remove('hidden');
-    }
-
-    function createRoom() {
-      socket.emit('create-room', {});
-    }
-
-    function joinRoom() {
-      const roomId = document.getElementById('roomIdInput').value.toUpperCase();
-      if (roomId) {
-        isMultiplayer = true;
-        showCharacterSelect();
-        // Will join room after character selection
-        currentRoom = roomId;
-      } else {
-        updateDialogue('Please enter a room ID.');
-      }
-    }
-
-    function backToMainMenu() {
-      document.getElementById('multiplayerOptions').classList.add('hidden');
-      document.getElementById('multiplayerMenu').classList.remove('hidden');
-    }
-
-    function showRoomLobby() {
-      document.getElementById('multiplayerOptions').classList.add('hidden');
-      document.getElementById('roomLobby').classList.remove('hidden');
-    }
-
-    function showCharacterSelect() {
-      document.getElementById('multiplayerMenu').classList.add('hidden');
-      document.getElementById('multiplayerOptions').classList.add('hidden');
-      document.getElementById('roomLobby').classList.add('hidden');
-      document.getElementById('characterSelect').classList.remove('hidden');
-      loadCharacterGrid();
-    }
-
-    function leaveRoom() {
-      if (socket) {
-        socket.disconnect();
-      }
-      currentRoom = null;
-      document.getElementById('roomLobby').classList.add('hidden');
-      document.getElementById('multiplayerMenu').classList.remove('hidden');
-    }
-
-    function startMultiplayerGame() {
-      if (gameState.player) {
-        document.getElementById('roomLobby').classList.add('hidden');
-        document.getElementById('gameInterface').classList.remove('hidden');
-        document.getElementById('multiplayerPlayers').classList.remove('hidden');
-        updateDialogue('Game started! You are now adventuring with your friends!');
-      } else {
-        updateDialogue('Please select a character first!');
-      }
-    }
-
-    function updatePlayersInRoom(players) {
-      const container = document.getElementById('playersInRoom');
-      container.innerHTML = '';
-      
-      players.forEach(player => {
-        const div = document.createElement('div');
-        div.className = 'bg-white p-2 rounded border';
-        div.innerHTML = `
-          <div class="font-bold">${player.name}</div>
-          <div class="text-sm text-gray-600">${player.class} - Level ${player.level}</div>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function updateOtherPlayersDisplay() {
-      if (!isMultiplayer) return;
-      
-      const container = document.getElementById('otherPlayersDisplay');
-      container.innerHTML = '';
-      
-      otherPlayers.forEach(player => {
-        const div = document.createElement('div');
-        div.className = 'bg-white p-2 rounded border text-sm';
-        div.innerHTML = `
-          <div class="font-bold">${player.name}</div>
-          <div>HP: ${player.hp}/${player.maxHp}</div>
-          <div>Level: ${player.level}</div>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function getPlayerName(socketId) {
-      const player = otherPlayers.find(p => p.socketId === socketId);
-      return player ? player.name : 'Unknown Player';
-    }
-
-    // Modified Functions for Multiplayer
+    
     function loadCharacterGrid() {
       const grid = document.getElementById('characterGrid');
       grid.innerHTML = '';
       
-      Object.entries(characters).forEach(([name, character]) => {
+      Object.entries(characterDatabase).forEach(([name, character]) => {
         const card = document.createElement('div');
         card.className = 'character-card';
         card.onclick = () => selectCharacter(name);
         
-        const imageElement = character.image ? 
-          `<img src="${character.image}" alt="${character.name}" class="character-image" onerror="this.outerHTML='<div class=\\'character-placeholder\\'>Image not found<br>Add your image here</div>'">` :
-          `<div class="character-placeholder">Upload your<br>character image</div>`;
-        
         card.innerHTML = `
-          ${imageElement}
           <div class="font-bold text-lg">${character.name}</div>
           <div class="text-sm text-yellow-800 font-semibold">${character.class}</div>
           <div class="text-xs mt-2">${character.description}</div>
-          <div class="character-stats">
+          <div class="text-xs mt-2">
             <div>HP: ${character.maxHp} | MP: ${character.maxMp}</div>
             <div>ATK: ${character.attack} | DEF: ${character.defense}</div>
-            <div>Gold: ${character.gold}</div>
           </div>
         `;
         
         grid.appendChild(card);
       });
     }
-
+    
     function selectCharacter(name) {
-      gameState.player = { ...characters[name] };
+      gameState.player = { ...characterDatabase[name] };
+      createPlayer(gameState.player);
+      showGameUI();
+      updatePlayerDisplay();
+      addChatMessage('System', `Welcome ${gameState.player.name}! Use WASD to move, E to explore.`);
+    }
+    
+    function updatePlayerDisplay() {
+      if (!gameState.player) return;
       
-      if (isMultiplayer && currentRoom) {
-        // Join room with character data
-        socket.emit('join-room', {
-          roomId: currentRoom,
-          playerData: gameState.player
-        });
-      } else if (isMultiplayer) {
-        showRoomLobby();
-      } else {
-        // Single player
-        document.getElementById('characterSelect').classList.add('hidden');
-        document.getElementById('gameInterface').classList.remove('hidden');
+      const player = gameState.player;
+      document.getElementById('playerName').textContent = `${player.name} (${player.class})`;
+      document.getElementById('hpText').textContent = `${player.hp}/${player.maxHp}`;
+      document.getElementById('mpText').textContent = `${player.mp}/${player.maxMp}`;
+      document.getElementById('levelText').textContent = player.level;
+      document.getElementById('goldText').textContent = player.gold;
+      
+      // Update bars
+      document.getElementById('hpBar').style.width = `${(player.hp / player.maxHp) * 100}%`;
+      document.getElementById('mpBar').style.width = `${(player.mp / player.maxMp) * 100}%`;
+    }
+    
+    // Game Actions
+    function explore() {
+      if (Math.random() < 0.3) {
+        startCombat();
+      } else if (Math.random() < 0.6) {
+        const gold = Math.floor(Math.random() * 25) + 5;
+        gameState.player.gold += gold;
         updatePlayerDisplay();
-        updateDialogue(`You have chosen ${name}, the ${gameState.player.class}. Your journey begins in the Village of Aravenhold. What will you do first?`);
+        addChatMessage('System', `You found ${gold} gold!`);
+      } else {
+        addChatMessage('System', 'You explore the area but find nothing interesting.');
+      }
+    }
+    
+    function rest() {
+      if (gameState.player.gold >= 10) {
+        gameState.player.hp = gameState.player.maxHp;
+        gameState.player.mp = gameState.player.maxMp;
+        gameState.player.gold -= 10;
+        updatePlayerDisplay();
+        addChatMessage('System', 'You rest and recover all HP and MP! (-10 gold)');
+      } else {
+        addChatMessage('System', 'Not enough gold to rest! (10 gold needed)');
+      }
+    }
+    
+    function jump() {
+      if (!player) return;
+      
+      // Simple jump animation
+      const originalY = player.position.y;
+      const jumpHeight = 4;
+      const jumpDuration = 500;
+      
+      let startTime = null;
+      
+      function animateJump(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const progress = elapsed / jumpDuration;
+        
+        if (progress < 1) {
+          const height = originalY + jumpHeight * Math.sin(progress * Math.PI);
+          player.position.y = height;
+          requestAnimationFrame(animateJump);
+        } else {
+          player.position.y = originalY;
+        }
+      }
+      
+      requestAnimationFrame(animateJump);
+    }
+    
+    function startCombat() {
+      gameState.inCombat = true;
+      gameState.mode = 'combat';
+      
+      const enemies = ['Goblin', 'Orc', 'Skeleton'];
+      const enemyType = enemies[Math.floor(Math.random() * enemies.length)];
+      
+      gameState.currentEnemy = {
+        name: enemyType,
+        hp: 50,
+        maxHp: 50,
+        attack: 12,
+        defense: 5
+      };
+      
+      hideAllPanels();
+      document.getElementById('combatUI').classList.remove('hidden');
+      updateEnemyDisplay();
+      addChatMessage('System', `A ${enemyType} appears! Prepare for battle!`);
+    }
+    
+    function updateEnemyDisplay() {
+      const enemy = gameState.currentEnemy;
+      document.getElementById('enemyName').textContent = enemy.name;
+      document.getElementById('enemyHp').textContent = `${enemy.hp}/${enemy.maxHp}`;
+      document.getElementById('enemyHpBar').style.width = `${(enemy.hp / enemy.maxHp) * 100}%`;
+    }
+    
+    function attack() {
+      if (!gameState.inCombat) return;
+      
+      const player = gameState.player;
+      const enemy = gameState.currentEnemy;
+      
+      const damage = Math.max(1, player.attack - enemy.defense + Math.floor(Math.random() * 5));
+      enemy.hp -= damage;
+      
+      addChatMessage('Combat', `You attack for ${damage} damage!`);
+      
+      if (enemy.hp <= 0) {
+        const exp = 25;
+        const gold = 15;
+        player.exp += exp;
+        player.gold += gold;
+        addChatMessage('Combat', `Victory! +${exp} EXP, +${gold} gold`);
+        endCombat();
+      } else {
+        // Enemy attacks back
+        const enemyDamage = Math.max(1, enemy.attack - player.defense + Math.floor(Math.random() * 3));
+        player.hp -= enemyDamage;
+        addChatMessage('Combat', `${enemy.name} attacks for ${enemyDamage} damage!`);
+        
+        if (player.hp <= 0) {
+          player.hp = 1;
+          addChatMessage('Combat', 'You were defeated but managed to escape!');
+          endCombat();
+        }
       }
       
       updatePlayerDisplay();
+      updateEnemyDisplay();
     }
-
-    function broadcastAction(action, result) {
-      if (isMultiplayer && socket) {
-        socket.emit('player-action', {
-          action: action,
-          result: result,
-          playerState: {
-            hp: gameState.player.hp,
-            mp: gameState.player.mp,
-            level: gameState.player.level,
-            gold: gameState.player.gold
-          }
-        });
+    
+    function useSkill() {
+      if (!gameState.inCombat || gameState.player.mp < 10) return;
+      
+      gameState.player.mp -= 10;
+      const damage = Math.floor(Math.random() * 20) + gameState.player.attack;
+      gameState.currentEnemy.hp -= damage;
+      
+      addChatMessage('Combat', `You use a skill for ${damage} damage!`);
+      
+      if (gameState.currentEnemy.hp <= 0) {
+        addChatMessage('Combat', 'Victory!');
+        endCombat();
+      }
+      
+      updatePlayerDisplay();
+      updateEnemyDisplay();
+    }
+    
+    function useItem() {
+      if (!gameState.inCombat) return;
+      
+      const healing = 30;
+      gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healing);
+      addChatMessage('Combat', `You use a health potion and recover ${healing} HP!`);
+      updatePlayerDisplay();
+    }
+    
+    function flee() {
+      if (Math.random() < 0.7) {
+        addChatMessage('Combat', 'You successfully flee from combat!');
+        endCombat();
+      } else {
+        addChatMessage('Combat', 'Failed to escape!');
       }
     }
-
-    // Initialize game
-    updateDialogue('Welcome to Chronicles of Nandigiri! Choose your game mode to begin your adventure.');
+    
+    function endCombat() {
+      gameState.inCombat = false;
+      gameState.currentEnemy = null;
+      showGameUI();
+    }
+    
+    function openInventory() {
+      document.getElementById('inventoryModal').classList.remove('hidden');
+      
+      const grid = document.getElementById('inventoryGrid');
+      grid.innerHTML = '';
+      
+      gameState.player.inventory.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'bg-gray-700 p-2 rounded text-white text-sm text-center';
+        div.textContent = item;
+        grid.appendChild(div);
+      });
+    }
+    
+    function closeInventory() {
+      document.getElementById('inventoryModal').classList.add('hidden');
+    }
+    
+    function toggleMap() {
+      const minimap = document.querySelector('.minimap-panel');
+      minimap.style.display = minimap.style.display === 'none' ? 'block' : 'none';
+    }
+    
+    // Chat System
+    function addChatMessage(sender, message) {
+      const chatMessages = document.getElementById('chatMessages');
+      const messageDiv = document.createElement('div');
+      messageDiv.innerHTML = `<span class="text-yellow-400">[${sender}]</span> ${message}`;
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    function handleChatInput(event) {
+      if (event.key === 'Enter') {
+        const input = event.target;
+        const message = input.value.trim();
+        
+        if (message) {
+          addChatMessage(gameState.player.name, message);
+          
+          if (isMultiplayer && socket) {
+            socket.emit('chat-message', { message: message });
+          }
+          
+          input.value = '';
+        }
+      }
+    }
+    
+    // Multiplayer Functions
+    function createRoom() {
+      if (!socket) {
+        socket = io();
+        setupSocketEvents();
+      }
+      socket.emit('create-room');
+    }
+    
+    function joinRoom() {
+      const roomId = document.getElementById('roomIdInput').value.toUpperCase();
+      if (roomId) {
+        isMultiplayer = true;
+        if (!socket) {
+          socket = io();
+          setupSocketEvents();
+        }
+        currentRoom = roomId;
+        showCharacterSelect();
+      }
+    }
+    
+    function setupSocketEvents() {
+      socket.on('room-created', (data) => {
+        currentRoom = data.roomId;
+        isMultiplayer = true;
+        addChatMessage('System', `Room ${currentRoom} created! Share this ID with friends.`);
+        showCharacterSelect();
+      });
+      
+      socket.on('player-joined', (data) => {
+        addChatMessage('System', `${data.playerName} joined the game!`);
+      });
+      
+      socket.on('player-move', (data) => {
+        // Update other player positions
+        if (players[data.socketId]) {
+          players[data.socketId].position.copy(data.position);
+        }
+      });
+      
+      socket.on('chat-message', (data) => {
+        addChatMessage(data.playerName, data.message);
+      });
+    }
+    
+    // Initialize the game when page loads
+    window.addEventListener('load', initializeGame);
   </script>
 </body>
 </html>
