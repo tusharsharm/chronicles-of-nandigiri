@@ -4,16 +4,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chronicles of Nandigiri - 3D RPG</title>
+  <title>Among Us Clone - Social Deduction Game</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body {
       margin: 0;
       padding: 0;
-      font-family: 'Garamond', serif;
+      font-family: 'Arial', sans-serif;
       background: #000;
       overflow: hidden;
     }
@@ -37,8 +36,8 @@
     
     .ui-panel {
       pointer-events: auto;
-      background: rgba(0, 0, 0, 0.8);
-      border: 2px solid #FFD700;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #00ff00;
       border-radius: 10px;
       padding: 15px;
       color: white;
@@ -50,8 +49,8 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.9);
-      border: 3px solid #FFD700;
+      background: rgba(0, 0, 0, 0.95);
+      border: 3px solid #00ff00;
       border-radius: 15px;
       padding: 30px;
       text-align: center;
@@ -59,84 +58,60 @@
       pointer-events: auto;
     }
     
-    .stats-panel {
+    .player-list {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 200px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .task-list {
       position: absolute;
       top: 20px;
       left: 20px;
       width: 250px;
     }
     
-    .minimap-panel {
+    .emergency-button {
       position: absolute;
-      top: 20px;
-      right: 20px;
-      width: 200px;
-      height: 200px;
-      background: rgba(0, 0, 0, 0.7);
-      border: 2px solid #FFD700;
-      border-radius: 10px;
-    }
-    
-    .controls-panel {
-      position: absolute;
-      bottom: 20px;
+      bottom: 100px;
       left: 50%;
       transform: translateX(-50%);
-      display: flex;
-      gap: 10px;
+      background: #ff0000;
+      color: white;
+      border: none;
+      padding: 15px 25px;
+      border-radius: 50%;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(255, 0, 0, 0.3);
+    }
+    
+    .emergency-button:hover {
+      background: #cc0000;
+      transform: translateX(-50%) scale(1.1);
     }
     
     .chat-panel {
       position: absolute;
       bottom: 20px;
       left: 20px;
-      width: 300px;
-      height: 150px;
-      background: rgba(0, 0, 0, 0.8);
-      border: 2px solid #FFD700;
+      width: 350px;
+      height: 120px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #00ff00;
       border-radius: 10px;
       padding: 10px;
       color: white;
       overflow-y: auto;
-      font-size: 12px;
+      font-size: 14px;
     }
-    
-    .character-card {
-      background: rgba(255, 248, 220, 0.95);
-      border: 3px solid #8B4513;
-      border-radius: 1rem;
-      padding: 1rem;
-      margin: 0.5rem;
-      transition: all 0.3s ease;
-      cursor: pointer;
-      color: #333;
-    }
-    
-    .character-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 25px rgba(255, 215, 0, 0.5);
-      border-color: #FFD700;
-    }
-    
-    .stat-bar {
-      background: #4a5568;
-      height: 15px;
-      border-radius: 10px;
-      overflow: hidden;
-      margin: 5px 0;
-    }
-    
-    .stat-fill {
-      height: 100%;
-      transition: width 0.3s ease;
-    }
-    
-    .hp-fill { background: #e53e3e; }
-    .mp-fill { background: #3182ce; }
-    .exp-fill { background: #38a169; }
     
     .action-button {
-      background: linear-gradient(45deg, #FFD700, #FFA500);
+      background: linear-gradient(45deg, #00ff00, #008800);
       color: #000;
       border: none;
       padding: 12px 20px;
@@ -144,129 +119,168 @@
       cursor: pointer;
       font-weight: bold;
       transition: all 0.3s ease;
+      margin: 5px;
     }
     
     .action-button:hover {
-      background: linear-gradient(45deg, #FFA500, #FFD700);
+      background: linear-gradient(45deg, #008800, #00ff00);
       transform: scale(1.05);
     }
     
-    .combat-button {
-      background: linear-gradient(45deg, #DC143C, #8B0000);
+    .impostor-button {
+      background: linear-gradient(45deg, #ff0000, #aa0000);
       color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 6px;
+    }
+    
+    .impostor-button:hover {
+      background: linear-gradient(45deg, #aa0000, #ff0000);
+    }
+    
+    .player-card {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid #00ff00;
+      border-radius: 8px;
+      padding: 8px;
+      margin: 5px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .player-alive {
+      border-color: #00ff00;
+    }
+    
+    .player-dead {
+      border-color: #ff0000;
+      opacity: 0.5;
+    }
+    
+    .player-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid white;
+    }
+    
+    .task-item {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid #00ff00;
+      border-radius: 5px;
+      padding: 8px;
+      margin: 5px 0;
       cursor: pointer;
-      margin: 5px;
-      transition: all 0.3s ease;
     }
     
-    .combat-button:hover {
-      background: linear-gradient(45deg, #8B0000, #DC143C);
-      transform: scale(1.05);
+    .task-completed {
+      background: rgba(0, 255, 0, 0.2);
+      border-color: #00ff00;
+      text-decoration: line-through;
     }
     
-    #crosshair {
+    .voting-panel {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 20px;
-      height: 20px;
-      border: 2px solid #FFD700;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 15;
+      background: rgba(0, 0, 0, 0.95);
+      border: 3px solid #ff0000;
+      border-radius: 15px;
+      padding: 30px;
+      min-width: 500px;
+      pointer-events: auto;
+    }
+    
+    .vote-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid #666;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 5px 0;
+      cursor: pointer;
+    }
+    
+    .vote-option:hover {
+      border-color: #ff0000;
+    }
+    
+    .vote-option.selected {
+      border-color: #ff0000;
+      background: rgba(255, 0, 0, 0.2);
     }
     
     .hidden { display: none !important; }
+    
+    .crewmate-win {
+      background: linear-gradient(45deg, #00ff00, #0088ff);
+    }
+    
+    .impostor-win {
+      background: linear-gradient(45deg, #ff0000, #ff4444);
+    }
   </style>
 </head>
 <body>
-  <!-- 3D Canvas -->
   <canvas id="gameCanvas"></canvas>
   
-  <!-- Crosshair -->
-  <div id="crosshair"></div>
-  
-  <!-- UI Overlay -->
   <div id="ui-overlay">
     <!-- Main Menu -->
     <div id="mainMenu" class="menu-panel">
-      <h1 class="text-4xl font-bold text-yellow-400 mb-6">Chronicles of Nandigiri</h1>
-      <h2 class="text-xl text-white mb-6">3D Fantasy RPG</h2>
+      <h1 class="text-4xl font-bold text-green-400 mb-6">Among Us Clone</h1>
+      <h2 class="text-xl text-white mb-6">Social Deduction Game</h2>
       <div class="space-y-4">
-        <button onclick="startSinglePlayer()" class="action-button w-full">Single Player</button>
-        <button onclick="showMultiplayerMenu()" class="action-button w-full">Multiplayer</button>
-      </div>
-    </div>
-    
-    <!-- Multiplayer Menu -->
-    <div id="multiplayerMenu" class="menu-panel hidden">
-      <h2 class="text-2xl font-bold text-yellow-400 mb-4">Multiplayer</h2>
-      <div class="space-y-4">
+        <input type="text" id="playerNameInput" placeholder="Enter your name" 
+               class="w-full px-3 py-2 border rounded text-black mb-4">
         <button onclick="createRoom()" class="action-button w-full">Create Room</button>
         <div>
-          <input type="text" id="roomIdInput" placeholder="Enter Room ID" 
+          <input type="text" id="roomIdInput" placeholder="Enter Room Code" 
                  class="w-full px-3 py-2 border rounded mb-2 text-black">
           <button onclick="joinRoom()" class="action-button w-full">Join Room</button>
         </div>
-        <button onclick="backToMainMenu()" class="bg-gray-600 text-white px-4 py-2 rounded w-full">Back</button>
       </div>
     </div>
     
-    <!-- Character Selection -->
-    <div id="characterSelect" class="menu-panel hidden">
-      <h2 class="text-2xl font-bold text-yellow-400 mb-4">Choose Your Character</h2>
-      <div id="characterGrid" class="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto"></div>
+    <!-- Lobby -->
+    <div id="lobbyMenu" class="menu-panel hidden">
+      <h2 class="text-2xl font-bold text-green-400 mb-4">Game Lobby</h2>
+      <div class="mb-4">
+        <p class="text-white">Room Code: <span id="roomCode" class="text-green-400 font-bold"></span></p>
+        <p class="text-white">Players: <span id="playerCount">0</span>/10</p>
+      </div>
+      <div id="lobbyPlayers" class="mb-4 max-h-40 overflow-y-auto"></div>
+      <div class="space-y-2">
+        <button onclick="startGame()" id="startButton" class="action-button w-full" disabled>Start Game</button>
+        <button onclick="leaveLobby()" class="bg-gray-600 text-white px-4 py-2 rounded w-full">Leave</button>
+      </div>
     </div>
     
     <!-- Game UI -->
     <div id="gameUI" class="hidden">
-      <!-- Player Stats -->
-      <div class="stats-panel ui-panel">
-        <h3 class="font-bold text-yellow-400 mb-2" id="playerName">Character</h3>
-        <div class="text-sm">
-          <div class="flex justify-between">
-            <span>HP:</span>
-            <span id="hpText">100/100</span>
-          </div>
-          <div class="stat-bar">
-            <div class="stat-fill hp-fill" id="hpBar" style="width: 100%"></div>
-          </div>
-          
-          <div class="flex justify-between">
-            <span>MP:</span>
-            <span id="mpText">50/50</span>
-          </div>
-          <div class="stat-bar">
-            <div class="stat-fill mp-fill" id="mpBar" style="width: 100%"></div>
-          </div>
-          
-          <div class="flex justify-between">
-            <span>Level:</span>
-            <span id="levelText">1</span>
-          </div>
-          <div class="flex justify-between">
-            <span>Gold:</span>
-            <span id="goldText" class="text-yellow-400">100</span>
+      <!-- Task List -->
+      <div class="task-list ui-panel">
+        <h3 class="font-bold text-green-400 mb-2">Tasks</h3>
+        <div id="taskList"></div>
+        <div class="mt-2">
+          <div class="text-sm">Progress: <span id="taskProgress">0/0</span></div>
+          <div class="bg-gray-600 h-2 rounded mt-1">
+            <div id="taskProgressBar" class="bg-green-400 h-2 rounded" style="width: 0%"></div>
           </div>
         </div>
       </div>
       
-      <!-- Minimap -->
-      <div class="minimap-panel ui-panel">
-        <canvas id="minimapCanvas" width="180" height="180"></canvas>
+      <!-- Player List -->
+      <div class="player-list ui-panel">
+        <h3 class="font-bold text-green-400 mb-2">Players</h3>
+        <div id="playerListGame"></div>
       </div>
       
-      <!-- Controls -->
-      <div class="controls-panel">
-        <button onclick="explore()" class="action-button">Explore (E)</button>
-        <button onclick="rest()" class="action-button">Rest (R)</button>
-        <button onclick="openInventory()" class="action-button">Inventory (I)</button>
-        <button onclick="toggleMap()" class="action-button">Map (M)</button>
-      </div>
+      <!-- Emergency Button -->
+      <button onclick="callEmergencyMeeting()" class="emergency-button" id="emergencyBtn">
+        EMERGENCY
+      </button>
       
       <!-- Chat Panel -->
       <div class="chat-panel" id="chatPanel">
@@ -275,112 +289,107 @@
                class="w-full mt-2 px-2 py-1 text-black rounded" 
                onkeypress="handleChatInput(event)">
       </div>
-    </div>
-    
-    <!-- Combat UI -->
-    <div id="combatUI" class="hidden">
-      <div class="menu-panel">
-        <h3 class="text-xl font-bold text-red-400 mb-4">Combat!</h3>
-        <div id="enemyInfo" class="mb-4">
-          <div class="font-bold" id="enemyName">Enemy</div>
-          <div class="flex justify-between">
-            <span>HP:</span>
-            <span id="enemyHp">100/100</span>
-          </div>
-          <div class="stat-bar">
-            <div class="stat-fill hp-fill" id="enemyHpBar" style="width: 100%"></div>
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <button onclick="attack()" class="combat-button">Attack</button>
-          <button onclick="useSkill()" class="combat-button">Use Skill</button>
-          <button onclick="useItem()" class="combat-button">Use Item</button>
-          <button onclick="flee()" class="combat-button">Flee</button>
-        </div>
+      
+      <!-- Impostor Actions -->
+      <div id="impostorActions" class="hidden" style="position: absolute; bottom: 60px; right: 20px;">
+        <button onclick="sabotage()" class="impostor-button">Sabotage</button>
+        <button onclick="vent()" class="impostor-button">Vent</button>
+        <button onclick="kill()" class="impostor-button" id="killButton" disabled>Kill</button>
       </div>
     </div>
     
-    <!-- Inventory Modal -->
-    <div id="inventoryModal" class="hidden">
+    <!-- Voting UI -->
+    <div id="votingUI" class="hidden">
+      <div class="voting-panel">
+        <h3 class="text-xl font-bold text-red-400 mb-4">Emergency Meeting!</h3>
+        <div class="text-white mb-4">
+          <p id="meetingReason">Who is the impostor?</p>
+          <p class="text-sm">Discussion time: <span id="discussionTimer">30</span>s</p>
+        </div>
+        <div id="voteOptions" class="mb-4"></div>
+        <button onclick="submitVote()" id="voteButton" class="action-button w-full" disabled>Vote</button>
+        <button onclick="skipVote()" class="bg-gray-600 text-white px-4 py-2 rounded w-full mt-2">Skip</button>
+      </div>
+    </div>
+    
+    <!-- Task Modal -->
+    <div id="taskModal" class="hidden">
       <div class="menu-panel">
-        <h3 class="text-xl font-bold text-yellow-400 mb-4">Inventory</h3>
-        <div id="inventoryGrid" class="grid grid-cols-4 gap-2 mb-4"></div>
-        <button onclick="closeInventory()" class="action-button w-full">Close</button>
+        <h3 class="text-xl font-bold text-green-400 mb-4" id="taskTitle">Task</h3>
+        <div id="taskContent" class="mb-4"></div>
+        <button onclick="closeTask()" class="action-button w-full">Close</button>
+      </div>
+    </div>
+    
+    <!-- Game Over -->
+    <div id="gameOverModal" class="hidden">
+      <div class="menu-panel">
+        <h2 class="text-3xl font-bold mb-4" id="gameOverTitle">Game Over</h2>
+        <div id="gameOverContent" class="mb-4"></div>
+        <button onclick="returnToLobby()" class="action-button w-full">Return to Lobby</button>
       </div>
     </div>
   </div>
   
   <script src="/socket.io/socket.io.js"></script>
-  <script src="characters.js"></script>
   <script>
-    // 3D Scene Setup
+    // Game state
     let scene, camera, renderer, controls;
     let player, players = {};
-    let world = {};
     let gameState = {
-      mode: 'menu', // menu, playing, combat
-      player: null,
-      location: 'Village',
-      inCombat: false,
-      currentEnemy: null
+      mode: 'menu', // menu, lobby, playing, meeting, gameover
+      playerName: '',
+      isImpostor: false,
+      isAlive: true,
+      currentRoom: null,
+      tasks: [],
+      completedTasks: 0,
+      selectedVote: null,
+      killCooldown: 0
     };
     
-    // Multiplayer
     let socket = null;
-    let isMultiplayer = false;
-    let currentRoom = null;
-    
-    // Input handling
-    const keys = {};
-    let mouseX = 0, mouseY = 0;
+    const playerColors = ['#ff0000', '#0000ff', '#00ff00', '#ff00ff', '#ffff00', '#00ffff', '#ffffff', '#ff8800', '#8800ff', '#88ff00'];
     
     function initializeGame() {
       setupScene();
       setupControls();
-      createWorld();
+      createSpaceship();
       animate();
-      
-      // Show main menu
       showMainMenu();
     }
     
     function setupScene() {
-      // Scene
       scene = new THREE.Scene();
-      scene.fog = new THREE.Fog(0x87CEEB, 50, 200);
+      scene.background = new THREE.Color(0x001122);
       
-      // Camera
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 10, 20);
+      camera.position.set(0, 15, 25);
       
-      // Renderer
       const canvas = document.getElementById('gameCanvas');
       renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       
-      // Lighting
-      const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+      const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
       scene.add(ambientLight);
       
       const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      directionalLight.position.set(50, 50, 50);
+      directionalLight.position.set(20, 20, 20);
       directionalLight.castShadow = true;
-      directionalLight.shadow.mapSize.width = 2048;
-      directionalLight.shadow.mapSize.height = 2048;
       scene.add(directionalLight);
       
-      // Controls
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.maxPolarAngle = Math.PI / 2.2;
-      controls.minDistance = 5;
+      controls.minDistance = 10;
       controls.maxDistance = 50;
     }
     
     function setupControls() {
+      const keys = {};
+      
       document.addEventListener('keydown', (event) => {
         keys[event.code] = true;
         handleKeyPress(event);
@@ -390,171 +399,150 @@
         keys[event.code] = false;
       });
       
-      document.addEventListener('mousemove', (event) => {
-        mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-        mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-      });
-      
       window.addEventListener('resize', onWindowResize);
-    }
-    
-    function createWorld() {
-      // Ground
-      const groundGeometry = new THREE.PlaneGeometry(200, 200);
-      const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x90EE90 });
-      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-      ground.rotation.x = -Math.PI / 2;
-      ground.receiveShadow = true;
-      scene.add(ground);
       
-      // Village buildings
-      createBuildings();
-      
-      // Trees
-      createTrees();
-      
-      // Mountains in background
-      createMountains();
-      
-      // Sky
-      const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
-      const skyMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0x87CEEB, 
-        side: THREE.BackSide 
-      });
-      const sky = new THREE.Mesh(skyGeometry, skyMaterial);
-      scene.add(sky);
-    }
-    
-    function createBuildings() {
-      // Village inn
-      const innGeometry = new THREE.BoxGeometry(8, 6, 10);
-      const innMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
-      const inn = new THREE.Mesh(innGeometry, innMaterial);
-      inn.position.set(-15, 3, -10);
-      inn.castShadow = true;
-      scene.add(inn);
-      
-      // Inn roof
-      const roofGeometry = new THREE.ConeGeometry(7, 3, 4);
-      const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 });
-      const roof = new THREE.Mesh(roofGeometry, roofMaterial);
-      roof.position.set(-15, 7.5, -10);
-      roof.rotation.y = Math.PI / 4;
-      scene.add(roof);
-      
-      // Shop
-      const shopGeometry = new THREE.BoxGeometry(6, 5, 8);
-      const shopMaterial = new THREE.MeshLambertMaterial({ color: 0xDEB887 });
-      const shop = new THREE.Mesh(shopGeometry, shopMaterial);
-      shop.position.set(15, 2.5, -15);
-      shop.castShadow = true;
-      scene.add(shop);
-      
-      // Houses
-      for (let i = 0; i < 5; i++) {
-        const houseGeometry = new THREE.BoxGeometry(4, 4, 6);
-        const houseMaterial = new THREE.MeshLambertMaterial({ 
-          color: new THREE.Color().setHSL(Math.random() * 0.1 + 0.1, 0.5, 0.6) 
-        });
-        const house = new THREE.Mesh(houseGeometry, houseMaterial);
-        house.position.set(
-          (Math.random() - 0.5) * 60,
-          2,
-          (Math.random() - 0.5) * 60
-        );
-        house.castShadow = true;
-        scene.add(house);
-      }
-    }
-    
-    function createTrees() {
-      for (let i = 0; i < 30; i++) {
-        // Tree trunk
-        const trunkGeometry = new THREE.CylinderGeometry(0.5, 0.8, 6);
-        const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
-        const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+      // Player movement
+      function updateMovement() {
+        if (!player || gameState.mode !== 'playing' || !gameState.isAlive) return;
         
-        // Tree leaves
-        const leavesGeometry = new THREE.SphereGeometry(3, 8, 6);
-        const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
-        const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
-        leaves.position.y = 5;
+        const moveSpeed = 0.3;
+        const moveVector = new THREE.Vector3();
         
-        const tree = new THREE.Group();
-        tree.add(trunk);
-        tree.add(leaves);
+        if (keys['KeyW'] || keys['ArrowUp']) moveVector.z -= moveSpeed;
+        if (keys['KeyS'] || keys['ArrowDown']) moveVector.z += moveSpeed;
+        if (keys['KeyA'] || keys['ArrowLeft']) moveVector.x -= moveSpeed;
+        if (keys['KeyD'] || keys['ArrowRight']) moveVector.x += moveSpeed;
         
-        tree.position.set(
-          (Math.random() - 0.5) * 180,
-          3,
-          (Math.random() - 0.5) * 180
-        );
-        
-        trunk.castShadow = true;
-        leaves.castShadow = true;
-        scene.add(tree);
-      }
-    }
-    
-    function createMountains() {
-      for (let i = 0; i < 8; i++) {
-        const mountainGeometry = new THREE.ConeGeometry(
-          Math.random() * 15 + 10,
-          Math.random() * 20 + 20,
-          8
-        );
-        const mountainMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
-        const mountain = new THREE.Mesh(mountainGeometry, mountainMaterial);
-        
-        const angle = (i / 8) * Math.PI * 2;
-        mountain.position.set(
-          Math.cos(angle) * 150,
-          10,
-          Math.sin(angle) * 150
-        );
-        
-        scene.add(mountain);
-      }
-    }
-    
-    function createPlayer(characterData) {
-      // Player model (simple for now)
-      const playerGeometry = new THREE.CapsuleGeometry(1, 2);
-      const playerMaterial = new THREE.MeshLambertMaterial({ color: 0x0000ff });
-      player = new THREE.Mesh(playerGeometry, playerMaterial);
-      player.position.set(0, 2, 0);
-      player.castShadow = true;
-      scene.add(player);
-      
-      // Camera follow
-      controls.target.copy(player.position);
-      camera.position.set(player.position.x, player.position.y + 10, player.position.z + 20);
-    }
-    
-    function updatePlayer() {
-      if (!player || gameState.mode !== 'playing') return;
-      
-      const moveSpeed = 0.2;
-      const moveVector = new THREE.Vector3();
-      
-      if (keys['KeyW'] || keys['ArrowUp']) moveVector.z -= moveSpeed;
-      if (keys['KeyS'] || keys['ArrowDown']) moveVector.z += moveSpeed;
-      if (keys['KeyA'] || keys['ArrowLeft']) moveVector.x -= moveSpeed;
-      if (keys['KeyD'] || keys['ArrowRight']) moveVector.x += moveSpeed;
-      
-      if (moveVector.length() > 0) {
-        player.position.add(moveVector);
-        controls.target.copy(player.position);
-        
-        // Broadcast position to other players
-        if (isMultiplayer && socket) {
-          socket.emit('player-move', {
-            position: player.position,
-            rotation: player.rotation
-          });
+        if (moveVector.length() > 0) {
+          player.position.add(moveVector);
+          controls.target.copy(player.position);
+          
+          if (socket) {
+            socket.emit('player-move', {
+              position: player.position,
+              roomCode: gameState.currentRoom
+            });
+          }
+          
+          checkTaskProximity();
+          checkKillRange();
         }
+        
+        requestAnimationFrame(updateMovement);
       }
+      
+      updateMovement();
+    }
+    
+    function createSpaceship() {
+      // Main floor
+      const floorGeometry = new THREE.PlaneGeometry(60, 40);
+      const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+      const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+      floor.rotation.x = -Math.PI / 2;
+      floor.receiveShadow = true;
+      scene.add(floor);
+      
+      // Walls
+      createWalls();
+      
+      // Task stations
+      createTaskStations();
+      
+      // Spawn points
+      createSpawnPoints();
+    }
+    
+    function createWalls() {
+      const wallMaterial = new THREE.MeshLambertMaterial({ color: 0x666666 });
+      
+      // Outer walls
+      const walls = [
+        { pos: [0, 2, -20], size: [60, 4, 1] },
+        { pos: [0, 2, 20], size: [60, 4, 1] },
+        { pos: [-30, 2, 0], size: [1, 4, 40] },
+        { pos: [30, 2, 0], size: [1, 4, 40] }
+      ];
+      
+      walls.forEach(wall => {
+        const geometry = new THREE.BoxGeometry(...wall.size);
+        const mesh = new THREE.Mesh(geometry, wallMaterial);
+        mesh.position.set(...wall.pos);
+        mesh.castShadow = true;
+        scene.add(mesh);
+      });
+      
+      // Interior walls for rooms
+      const interiorWalls = [
+        { pos: [-10, 2, -10], size: [20, 4, 1] },
+        { pos: [10, 2, -10], size: [20, 4, 1] },
+        { pos: [-10, 2, 10], size: [20, 4, 1] },
+        { pos: [10, 2, 10], size: [20, 4, 1] }
+      ];
+      
+      interiorWalls.forEach(wall => {
+        const geometry = new THREE.BoxGeometry(...wall.size);
+        const mesh = new THREE.Mesh(geometry, wallMaterial);
+        mesh.position.set(...wall.pos);
+        mesh.castShadow = true;
+        scene.add(mesh);
+      });
+    }
+    
+    function createTaskStations() {
+      const taskPositions = [
+        { name: 'Engines', pos: [-25, 1, -15], color: 0xff4444 },
+        { name: 'Reactor', pos: [-25, 1, 15], color: 0x44ff44 },
+        { name: 'Electrical', pos: [25, 1, -15], color: 0x4444ff },
+        { name: 'Navigation', pos: [25, 1, 15], color: 0xffff44 },
+        { name: 'Cafeteria', pos: [0, 1, -15], color: 0xff44ff },
+        { name: 'Admin', pos: [0, 1, 15], color: 0x44ffff }
+      ];
+      
+      taskPositions.forEach(task => {
+        const geometry = new THREE.BoxGeometry(3, 2, 3);
+        const material = new THREE.MeshLambertMaterial({ color: task.color });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(...task.pos);
+        mesh.userData = { isTask: true, taskName: task.name };
+        mesh.castShadow = true;
+        scene.add(mesh);
+      });
+    }
+    
+    function createSpawnPoints() {
+      // Spawn area in center
+      const spawnGeometry = new THREE.CylinderGeometry(5, 5, 0.2);
+      const spawnMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
+      const spawn = new THREE.Mesh(spawnGeometry, spawnMaterial);
+      spawn.position.set(0, 0.1, 0);
+      scene.add(spawn);
+    }
+    
+    function createPlayer(playerData, isLocalPlayer = false) {
+      const geometry = new THREE.CapsuleGeometry(0.8, 1.5);
+      const material = new THREE.MeshLambertMaterial({ color: playerData.color });
+      const playerMesh = new THREE.Mesh(geometry, material);
+      
+      playerMesh.position.set(
+        (Math.random() - 0.5) * 8,
+        1.5,
+        (Math.random() - 0.5) * 8
+      );
+      playerMesh.castShadow = true;
+      playerMesh.userData = playerData;
+      
+      scene.add(playerMesh);
+      
+      if (isLocalPlayer) {
+        player = playerMesh;
+        controls.target.copy(player.position);
+        camera.position.set(player.position.x, player.position.y + 10, player.position.z + 15);
+      } else {
+        players[playerData.id] = playerMesh;
+      }
+      
+      return playerMesh;
     }
     
     function handleKeyPress(event) {
@@ -562,20 +550,17 @@
       
       switch(event.code) {
         case 'KeyE':
-          explore();
+          interactWithTask();
           break;
         case 'KeyR':
-          rest();
+          if (gameState.isImpostor) {
+            reportBody();
+          }
           break;
-        case 'KeyI':
-          openInventory();
-          break;
-        case 'KeyM':
-          toggleMap();
-          break;
-        case 'Space':
-          event.preventDefault();
-          jump();
+        case 'KeyQ':
+          if (gameState.isImpostor) {
+            sabotage();
+          }
           break;
       }
     }
@@ -583,36 +568,17 @@
     function animate() {
       requestAnimationFrame(animate);
       
-      updatePlayer();
       controls.update();
       
-      renderer.render(scene, camera);
-      updateMinimap();
-    }
-    
-    function updateMinimap() {
-      const canvas = document.getElementById('minimapCanvas');
-      if (!canvas) return;
-      
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#2a4d3a';
-      ctx.fillRect(0, 0, 180, 180);
-      
-      // Draw player
-      if (player) {
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath();
-        ctx.arc(90 + player.position.x, 90 + player.position.z, 3, 0, 2 * Math.PI);
-        ctx.fill();
+      // Update kill cooldown
+      if (gameState.killCooldown > 0) {
+        gameState.killCooldown -= 1/60;
+        if (gameState.killCooldown <= 0) {
+          document.getElementById('killButton').disabled = false;
+        }
       }
       
-      // Draw other players
-      Object.values(players).forEach(otherPlayer => {
-        ctx.fillStyle = '#FF6B6B';
-        ctx.beginPath();
-        ctx.arc(90 + otherPlayer.position.x, 90 + otherPlayer.position.z, 2, 0, 2 * Math.PI);
-        ctx.fill();
-      });
+      renderer.render(scene, camera);
     }
     
     function onWindowResize() {
@@ -628,271 +594,503 @@
       gameState.mode = 'menu';
     }
     
-    function showMultiplayerMenu() {
+    function showLobby() {
       hideAllPanels();
-      document.getElementById('multiplayerMenu').classList.remove('hidden');
-    }
-    
-    function backToMainMenu() {
-      showMainMenu();
-    }
-    
-    function showCharacterSelect() {
-      hideAllPanels();
-      document.getElementById('characterSelect').classList.remove('hidden');
-      loadCharacterGrid();
+      document.getElementById('lobbyMenu').classList.remove('hidden');
+      gameState.mode = 'lobby';
     }
     
     function showGameUI() {
       hideAllPanels();
       document.getElementById('gameUI').classList.remove('hidden');
       gameState.mode = 'playing';
+      
+      if (gameState.isImpostor) {
+        document.getElementById('impostorActions').classList.remove('hidden');
+      }
     }
     
     function hideAllPanels() {
-      const panels = ['mainMenu', 'multiplayerMenu', 'characterSelect', 'gameUI', 'combatUI', 'inventoryModal'];
+      const panels = ['mainMenu', 'lobbyMenu', 'gameUI', 'votingUI', 'taskModal', 'gameOverModal'];
       panels.forEach(id => {
         document.getElementById(id).classList.add('hidden');
       });
     }
     
-    function startSinglePlayer() {
-      isMultiplayer = false;
-      showCharacterSelect();
+    // Multiplayer Functions
+    function createRoom() {
+      const playerName = document.getElementById('playerNameInput').value.trim();
+      if (!playerName) {
+        alert('Please enter your name');
+        return;
+      }
+      
+      gameState.playerName = playerName;
+      
+      if (!socket) {
+        socket = io();
+        setupSocketEvents();
+      }
+      
+      socket.emit('create-room', { playerName: playerName });
     }
     
-    function loadCharacterGrid() {
-      const grid = document.getElementById('characterGrid');
-      grid.innerHTML = '';
+    function joinRoom() {
+      const playerName = document.getElementById('playerNameInput').value.trim();
+      const roomCode = document.getElementById('roomIdInput').value.toUpperCase();
       
-      Object.entries(characterDatabase).forEach(([name, character]) => {
-        const card = document.createElement('div');
-        card.className = 'character-card';
-        card.onclick = () => selectCharacter(name);
-        
-        card.innerHTML = `
-          <div class="font-bold text-lg">${character.name}</div>
-          <div class="text-sm text-yellow-800 font-semibold">${character.class}</div>
-          <div class="text-xs mt-2">${character.description}</div>
-          <div class="text-xs mt-2">
-            <div>HP: ${character.maxHp} | MP: ${character.maxMp}</div>
-            <div>ATK: ${character.attack} | DEF: ${character.defense}</div>
-          </div>
-        `;
-        
-        grid.appendChild(card);
+      if (!playerName || !roomCode) {
+        alert('Please enter your name and room code');
+        return;
+      }
+      
+      gameState.playerName = playerName;
+      
+      if (!socket) {
+        socket = io();
+        setupSocketEvents();
+      }
+      
+      socket.emit('join-room', { 
+        playerName: playerName, 
+        roomCode: roomCode 
       });
     }
     
-    function selectCharacter(name) {
-      gameState.player = { ...characterDatabase[name] };
-      createPlayer(gameState.player);
-      showGameUI();
-      updatePlayerDisplay();
-      addChatMessage('System', `Welcome ${gameState.player.name}! Use WASD to move, E to explore.`);
+    function setupSocketEvents() {
+      socket.on('room-created', (data) => {
+        gameState.currentRoom = data.roomCode;
+        document.getElementById('roomCode').textContent = data.roomCode;
+        showLobby();
+        updateLobbyPlayers(data.players);
+      });
+      
+      socket.on('room-joined', (data) => {
+        gameState.currentRoom = data.roomCode;
+        document.getElementById('roomCode').textContent = data.roomCode;
+        showLobby();
+        updateLobbyPlayers(data.players);
+      });
+      
+      socket.on('player-joined', (data) => {
+        updateLobbyPlayers(data.players);
+        addChatMessage('System', `${data.newPlayer.name} joined the game`);
+      });
+      
+      socket.on('player-left', (data) => {
+        updateLobbyPlayers(data.players);
+        addChatMessage('System', `${data.playerName} left the game`);
+        
+        if (players[data.socketId]) {
+          scene.remove(players[data.socketId]);
+          delete players[data.socketId];
+        }
+      });
+      
+      socket.on('game-started', (data) => {
+        gameState.isImpostor = data.isImpostor;
+        gameState.tasks = data.tasks;
+        gameState.isAlive = true;
+        
+        createPlayer({
+          id: socket.id,
+          name: gameState.playerName,
+          color: data.playerColor,
+          isImpostor: gameState.isImpostor
+        }, true);
+        
+        data.players.forEach(p => {
+          if (p.id !== socket.id) {
+            createPlayer(p);
+          }
+        });
+        
+        showGameUI();
+        updateTaskList();
+        updatePlayerList(data.players);
+        
+        if (gameState.isImpostor) {
+          addChatMessage('System', 'You are an IMPOSTOR! Eliminate the crew!');
+        } else {
+          addChatMessage('System', 'You are a CREWMATE! Complete tasks and find the impostor!');
+        }
+      });
+      
+      socket.on('player-move', (data) => {
+        if (players[data.socketId]) {
+          players[data.socketId].position.copy(data.position);
+        }
+      });
+      
+      socket.on('task-completed', (data) => {
+        addChatMessage('System', `Task completed: ${data.taskName}`);
+        updateTaskProgress(data.totalCompleted, data.totalTasks);
+      });
+      
+      socket.on('emergency-meeting', (data) => {
+        startVoting(data);
+      });
+      
+      socket.on('player-killed', (data) => {
+        if (data.victimId === socket.id) {
+          gameState.isAlive = false;
+          addChatMessage('System', 'You have been killed!');
+        }
+        
+        if (players[data.victimId]) {
+          players[data.victimId].material.color.setHex(0x888888);
+        }
+        
+        addChatMessage('System', `${data.victimName} was killed!`);
+      });
+      
+      socket.on('game-over', (data) => {
+        showGameOver(data);
+      });
+      
+      socket.on('chat-message', (data) => {
+        addChatMessage(data.playerName, data.message);
+      });
+      
+      socket.on('error', (data) => {
+        alert(data.message);
+      });
     }
     
-    function updatePlayerDisplay() {
-      if (!gameState.player) return;
+    function updateLobbyPlayers(players) {
+      const container = document.getElementById('lobbyPlayers');
+      container.innerHTML = '';
       
-      const player = gameState.player;
-      document.getElementById('playerName').textContent = `${player.name} (${player.class})`;
-      document.getElementById('hpText').textContent = `${player.hp}/${player.maxHp}`;
-      document.getElementById('mpText').textContent = `${player.mp}/${player.maxMp}`;
-      document.getElementById('levelText').textContent = player.level;
-      document.getElementById('goldText').textContent = player.gold;
+      document.getElementById('playerCount').textContent = players.length;
       
-      // Update bars
-      document.getElementById('hpBar').style.width = `${(player.hp / player.maxHp) * 100}%`;
-      document.getElementById('mpBar').style.width = `${(player.mp / player.maxMp) * 100}%`;
+      players.forEach((player, index) => {
+        const div = document.createElement('div');
+        div.className = 'player-card';
+        div.innerHTML = `
+          <div class="player-color" style="background-color: ${playerColors[index]}"></div>
+          <span>${player.name}</span>
+        `;
+        container.appendChild(div);
+      });
+      
+      document.getElementById('startButton').disabled = players.length < 2;
+    }
+    
+    function updatePlayerList(players) {
+      const container = document.getElementById('playerListGame');
+      container.innerHTML = '';
+      
+      players.forEach(player => {
+        const div = document.createElement('div');
+        div.className = `player-card ${player.isAlive ? 'player-alive' : 'player-dead'}`;
+        div.innerHTML = `
+          <div class="player-color" style="background-color: ${player.color}"></div>
+          <span>${player.name}</span>
+        `;
+        container.appendChild(div);
+      });
+    }
+    
+    function updateTaskList() {
+      const container = document.getElementById('taskList');
+      container.innerHTML = '';
+      
+      gameState.tasks.forEach((task, index) => {
+        const div = document.createElement('div');
+        div.className = `task-item ${task.completed ? 'task-completed' : ''}`;
+        div.textContent = task.name;
+        div.onclick = () => goToTask(task);
+        container.appendChild(div);
+      });
+      
+      updateTaskProgress(gameState.completedTasks, gameState.tasks.length);
+    }
+    
+    function updateTaskProgress(completed, total) {
+      document.getElementById('taskProgress').textContent = `${completed}/${total}`;
+      const percentage = total > 0 ? (completed / total) * 100 : 0;
+      document.getElementById('taskProgressBar').style.width = `${percentage}%`;
+    }
+    
+    function startGame() {
+      if (socket) {
+        socket.emit('start-game', { roomCode: gameState.currentRoom });
+      }
+    }
+    
+    function leaveLobby() {
+      if (socket) {
+        socket.emit('leave-room');
+      }
+      showMainMenu();
     }
     
     // Game Actions
-    function explore() {
-      if (Math.random() < 0.3) {
-        startCombat();
-      } else if (Math.random() < 0.6) {
-        const gold = Math.floor(Math.random() * 25) + 5;
-        gameState.player.gold += gold;
-        updatePlayerDisplay();
-        addChatMessage('System', `You found ${gold} gold!`);
-      } else {
-        addChatMessage('System', 'You explore the area but find nothing interesting.');
+    function interactWithTask() {
+      if (!gameState.isAlive) return;
+      
+      // Check if near a task station
+      const nearbyTasks = scene.children.filter(obj => {
+        if (!obj.userData.isTask) return false;
+        const distance = player.position.distanceTo(obj.position);
+        return distance < 3;
+      });
+      
+      if (nearbyTasks.length > 0) {
+        const task = nearbyTasks[0];
+        openTaskModal(task.userData.taskName);
       }
     }
     
-    function rest() {
-      if (gameState.player.gold >= 10) {
-        gameState.player.hp = gameState.player.maxHp;
-        gameState.player.mp = gameState.player.maxMp;
-        gameState.player.gold -= 10;
-        updatePlayerDisplay();
-        addChatMessage('System', 'You rest and recover all HP and MP! (-10 gold)');
-      } else {
-        addChatMessage('System', 'Not enough gold to rest! (10 gold needed)');
-      }
+    function openTaskModal(taskName) {
+      document.getElementById('taskTitle').textContent = taskName;
+      document.getElementById('taskContent').innerHTML = `
+        <p>Complete the ${taskName} task</p>
+        <button onclick="completeTask('${taskName}')" class="action-button">Complete Task</button>
+      `;
+      document.getElementById('taskModal').classList.remove('hidden');
     }
     
-    function jump() {
-      if (!player) return;
-      
-      // Simple jump animation
-      const originalY = player.position.y;
-      const jumpHeight = 4;
-      const jumpDuration = 500;
-      
-      let startTime = null;
-      
-      function animateJump(timestamp) {
-        if (!startTime) startTime = timestamp;
-        const elapsed = timestamp - startTime;
-        const progress = elapsed / jumpDuration;
+    function completeTask(taskName) {
+      const task = gameState.tasks.find(t => t.name === taskName);
+      if (task && !task.completed) {
+        task.completed = true;
+        gameState.completedTasks++;
         
-        if (progress < 1) {
-          const height = originalY + jumpHeight * Math.sin(progress * Math.PI);
-          player.position.y = height;
-          requestAnimationFrame(animateJump);
-        } else {
-          player.position.y = originalY;
+        if (socket) {
+          socket.emit('complete-task', {
+            taskName: taskName,
+            roomCode: gameState.currentRoom
+          });
         }
+        
+        updateTaskList();
+        closeTask();
       }
-      
-      requestAnimationFrame(animateJump);
     }
     
-    function startCombat() {
-      gameState.inCombat = true;
-      gameState.mode = 'combat';
+    function closeTask() {
+      document.getElementById('taskModal').classList.add('hidden');
+    }
+    
+    function checkTaskProximity() {
+      // Implementation for task proximity checking
+    }
+    
+    function checkKillRange() {
+      if (!gameState.isImpostor || !gameState.isAlive || gameState.killCooldown > 0) return;
       
-      const enemies = ['Goblin', 'Orc', 'Skeleton'];
-      const enemyType = enemies[Math.floor(Math.random() * enemies.length)];
+      let canKill = false;
+      Object.values(players).forEach(otherPlayer => {
+        const distance = player.position.distanceTo(otherPlayer.position);
+        if (distance < 3 && otherPlayer.userData.isAlive) {
+          canKill = true;
+        }
+      });
       
-      gameState.currentEnemy = {
-        name: enemyType,
-        hp: 50,
-        maxHp: 50,
-        attack: 12,
-        defense: 5
-      };
+      document.getElementById('killButton').disabled = !canKill;
+    }
+    
+    function callEmergencyMeeting() {
+      if (!gameState.isAlive) return;
+      
+      if (socket) {
+        socket.emit('emergency-meeting', {
+          roomCode: gameState.currentRoom,
+          callerName: gameState.playerName
+        });
+      }
+    }
+    
+    function kill() {
+      if (!gameState.isImpostor || !gameState.isAlive || gameState.killCooldown > 0) return;
+      
+      const nearbyPlayers = Object.entries(players).filter(([id, playerMesh]) => {
+        const distance = player.position.distanceTo(playerMesh.position);
+        return distance < 3 && playerMesh.userData.isAlive;
+      });
+      
+      if (nearbyPlayers.length > 0) {
+        const [victimId, victimMesh] = nearbyPlayers[0];
+        
+        if (socket) {
+          socket.emit('kill-player', {
+            victimId: victimId,
+            roomCode: gameState.currentRoom
+          });
+        }
+        
+        gameState.killCooldown = 20; // 20 second cooldown
+        document.getElementById('killButton').disabled = true;
+      }
+    }
+    
+    function sabotage() {
+      if (!gameState.isImpostor) return;
+      
+      if (socket) {
+        socket.emit('sabotage', {
+          roomCode: gameState.currentRoom,
+          sabotageType: 'lights'
+        });
+      }
+      
+      addChatMessage('System', 'Sabotage activated!');
+    }
+    
+    function vent() {
+      if (!gameState.isImpostor) return;
+      
+      // Simple vent teleport
+      player.position.set(
+        (Math.random() - 0.5) * 40,
+        1.5,
+        (Math.random() - 0.5) * 30
+      );
+      
+      addChatMessage('System', 'You used the vent!');
+    }
+    
+    function reportBody() {
+      if (socket) {
+        socket.emit('report-body', {
+          roomCode: gameState.currentRoom,
+          reporterName: gameState.playerName
+        });
+      }
+    }
+    
+    function startVoting(data) {
+      hideAllPanels();
+      document.getElementById('votingUI').classList.remove('hidden');
+      document.getElementById('meetingReason').textContent = data.reason;
+      
+      // Start discussion timer
+      let timeLeft = 30;
+      const timer = setInterval(() => {
+        document.getElementById('discussionTimer').textContent = timeLeft;
+        timeLeft--;
+        
+        if (timeLeft < 0) {
+          clearInterval(timer);
+          // Enable voting
+          createVoteOptions(data.players);
+        }
+      }, 1000);
+    }
+    
+    function createVoteOptions(players) {
+      const container = document.getElementById('voteOptions');
+      container.innerHTML = '';
+      
+      players.forEach(player => {
+        if (player.isAlive) {
+          const div = document.createElement('div');
+          div.className = 'vote-option';
+          div.onclick = () => selectVote(player.id);
+          div.innerHTML = `
+            <span>${player.name}</span>
+            <div class="player-color" style="background-color: ${player.color}"></div>
+          `;
+          container.appendChild(div);
+        }
+      });
+      
+      document.getElementById('voteButton').disabled = false;
+    }
+    
+    function selectVote(playerId) {
+      gameState.selectedVote = playerId;
+      
+      document.querySelectorAll('.vote-option').forEach(option => {
+        option.classList.remove('selected');
+      });
+      
+      event.currentTarget.classList.add('selected');
+    }
+    
+    function submitVote() {
+      if (gameState.selectedVote && socket) {
+        socket.emit('vote', {
+          roomCode: gameState.currentRoom,
+          vote: gameState.selectedVote
+        });
+        
+        hideAllPanels();
+        showGameUI();
+      }
+    }
+    
+    function skipVote() {
+      if (socket) {
+        socket.emit('vote', {
+          roomCode: gameState.currentRoom,
+          vote: 'skip'
+        });
+      }
       
       hideAllPanels();
-      document.getElementById('combatUI').classList.remove('hidden');
-      updateEnemyDisplay();
-      addChatMessage('System', `A ${enemyType} appears! Prepare for battle!`);
-    }
-    
-    function updateEnemyDisplay() {
-      const enemy = gameState.currentEnemy;
-      document.getElementById('enemyName').textContent = enemy.name;
-      document.getElementById('enemyHp').textContent = `${enemy.hp}/${enemy.maxHp}`;
-      document.getElementById('enemyHpBar').style.width = `${(enemy.hp / enemy.maxHp) * 100}%`;
-    }
-    
-    function attack() {
-      if (!gameState.inCombat) return;
-      
-      const player = gameState.player;
-      const enemy = gameState.currentEnemy;
-      
-      const damage = Math.max(1, player.attack - enemy.defense + Math.floor(Math.random() * 5));
-      enemy.hp -= damage;
-      
-      addChatMessage('Combat', `You attack for ${damage} damage!`);
-      
-      if (enemy.hp <= 0) {
-        const exp = 25;
-        const gold = 15;
-        player.exp += exp;
-        player.gold += gold;
-        addChatMessage('Combat', `Victory! +${exp} EXP, +${gold} gold`);
-        endCombat();
-      } else {
-        // Enemy attacks back
-        const enemyDamage = Math.max(1, enemy.attack - player.defense + Math.floor(Math.random() * 3));
-        player.hp -= enemyDamage;
-        addChatMessage('Combat', `${enemy.name} attacks for ${enemyDamage} damage!`);
-        
-        if (player.hp <= 0) {
-          player.hp = 1;
-          addChatMessage('Combat', 'You were defeated but managed to escape!');
-          endCombat();
-        }
-      }
-      
-      updatePlayerDisplay();
-      updateEnemyDisplay();
-    }
-    
-    function useSkill() {
-      if (!gameState.inCombat || gameState.player.mp < 10) return;
-      
-      gameState.player.mp -= 10;
-      const damage = Math.floor(Math.random() * 20) + gameState.player.attack;
-      gameState.currentEnemy.hp -= damage;
-      
-      addChatMessage('Combat', `You use a skill for ${damage} damage!`);
-      
-      if (gameState.currentEnemy.hp <= 0) {
-        addChatMessage('Combat', 'Victory!');
-        endCombat();
-      }
-      
-      updatePlayerDisplay();
-      updateEnemyDisplay();
-    }
-    
-    function useItem() {
-      if (!gameState.inCombat) return;
-      
-      const healing = 30;
-      gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healing);
-      addChatMessage('Combat', `You use a health potion and recover ${healing} HP!`);
-      updatePlayerDisplay();
-    }
-    
-    function flee() {
-      if (Math.random() < 0.7) {
-        addChatMessage('Combat', 'You successfully flee from combat!');
-        endCombat();
-      } else {
-        addChatMessage('Combat', 'Failed to escape!');
-      }
-    }
-    
-    function endCombat() {
-      gameState.inCombat = false;
-      gameState.currentEnemy = null;
       showGameUI();
     }
     
-    function openInventory() {
-      document.getElementById('inventoryModal').classList.remove('hidden');
+    function showGameOver(data) {
+      hideAllPanels();
+      document.getElementById('gameOverModal').classList.remove('hidden');
       
-      const grid = document.getElementById('inventoryGrid');
-      grid.innerHTML = '';
+      const title = document.getElementById('gameOverTitle');
+      const content = document.getElementById('gameOverContent');
       
-      gameState.player.inventory.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'bg-gray-700 p-2 rounded text-white text-sm text-center';
-        div.textContent = item;
-        grid.appendChild(div);
-      });
+      if (data.winner === 'crewmates') {
+        title.textContent = 'Crewmates Win!';
+        title.className = 'text-3xl font-bold mb-4 text-green-400';
+        content.innerHTML = '<p>All tasks completed or impostors eliminated!</p>';
+      } else {
+        title.textContent = 'Impostors Win!';
+        title.className = 'text-3xl font-bold mb-4 text-red-400';
+        content.innerHTML = '<p>The impostors have taken over!</p>';
+      }
+      
+      // Show impostor reveals
+      const impostors = data.impostors || [];
+      if (impostors.length > 0) {
+        content.innerHTML += '<p class="mt-4">The impostors were:</p>';
+        impostors.forEach(imp => {
+          content.innerHTML += `<p class="text-red-400">${imp.name}</p>`;
+        });
+      }
     }
     
-    function closeInventory() {
-      document.getElementById('inventoryModal').classList.add('hidden');
-    }
-    
-    function toggleMap() {
-      const minimap = document.querySelector('.minimap-panel');
-      minimap.style.display = minimap.style.display === 'none' ? 'block' : 'none';
+    function returnToLobby() {
+      // Clean up game objects
+      if (player) {
+        scene.remove(player);
+        player = null;
+      }
+      
+      Object.values(players).forEach(p => scene.remove(p));
+      players = {};
+      
+      // Reset game state
+      gameState.isImpostor = false;
+      gameState.isAlive = true;
+      gameState.tasks = [];
+      gameState.completedTasks = 0;
+      gameState.selectedVote = null;
+      
+      showLobby();
     }
     
     // Chat System
     function addChatMessage(sender, message) {
       const chatMessages = document.getElementById('chatMessages');
       const messageDiv = document.createElement('div');
-      messageDiv.innerHTML = `<span class="text-yellow-400">[${sender}]</span> ${message}`;
+      
+      if (sender === 'System') {
+        messageDiv.innerHTML = `<span class="text-green-400">[${sender}]</span> ${message}`;
+      } else {
+        messageDiv.innerHTML = `<span class="text-blue-400">[${sender}]</span> ${message}`;
+      }
+      
       chatMessages.appendChild(messageDiv);
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
@@ -902,65 +1100,18 @@
         const input = event.target;
         const message = input.value.trim();
         
-        if (message) {
-          addChatMessage(gameState.player.name, message);
-          
-          if (isMultiplayer && socket) {
-            socket.emit('chat-message', { message: message });
-          }
+        if (message && socket) {
+          socket.emit('chat-message', {
+            message: message,
+            roomCode: gameState.currentRoom
+          });
           
           input.value = '';
         }
       }
     }
     
-    // Multiplayer Functions
-    function createRoom() {
-      if (!socket) {
-        socket = io();
-        setupSocketEvents();
-      }
-      socket.emit('create-room');
-    }
-    
-    function joinRoom() {
-      const roomId = document.getElementById('roomIdInput').value.toUpperCase();
-      if (roomId) {
-        isMultiplayer = true;
-        if (!socket) {
-          socket = io();
-          setupSocketEvents();
-        }
-        currentRoom = roomId;
-        showCharacterSelect();
-      }
-    }
-    
-    function setupSocketEvents() {
-      socket.on('room-created', (data) => {
-        currentRoom = data.roomId;
-        isMultiplayer = true;
-        addChatMessage('System', `Room ${currentRoom} created! Share this ID with friends.`);
-        showCharacterSelect();
-      });
-      
-      socket.on('player-joined', (data) => {
-        addChatMessage('System', `${data.playerName} joined the game!`);
-      });
-      
-      socket.on('player-move', (data) => {
-        // Update other player positions
-        if (players[data.socketId]) {
-          players[data.socketId].position.copy(data.position);
-        }
-      });
-      
-      socket.on('chat-message', (data) => {
-        addChatMessage(data.playerName, data.message);
-      });
-    }
-    
-    // Initialize the game when page loads
+    // Initialize the game
     window.addEventListener('load', initializeGame);
   </script>
 </body>
