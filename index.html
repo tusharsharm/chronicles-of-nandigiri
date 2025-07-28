@@ -86,8 +86,64 @@
       
       <!-- Game State Display -->
       <div id="gameState" class="mb-6">
+        <!-- Multiplayer Menu -->
+        <div id="multiplayerMenu" class="multiplayer-menu">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold mb-4">Choose Game Mode</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button onclick="startSinglePlayer()" class="bg-blue-600 text-white px-6 py-4 rounded hover:bg-blue-700">
+                <div class="font-bold">Single Player</div>
+                <div class="text-sm">Play alone</div>
+              </button>
+              <button onclick="showMultiplayerOptions()" class="bg-green-600 text-white px-6 py-4 rounded hover:bg-green-700">
+                <div class="font-bold">Multiplayer</div>
+                <div class="text-sm">Play with friends</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Multiplayer Options -->
+        <div id="multiplayerOptions" class="hidden">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold mb-4">Multiplayer Options</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <button onclick="createRoom()" class="bg-purple-600 text-white px-6 py-4 rounded hover:bg-purple-700">
+                <div class="font-bold">Create Room</div>
+                <div class="text-sm">Start a new game</div>
+              </button>
+              <div>
+                <input type="text" id="roomIdInput" placeholder="Enter Room ID" class="w-full px-3 py-2 border rounded mb-2">
+                <button onclick="joinRoom()" class="bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 w-full">
+                  <div class="font-bold">Join Room</div>
+                </button>
+              </div>
+            </div>
+            <button onclick="backToMainMenu()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Back</button>
+          </div>
+        </div>
+
+        <!-- Room Lobby -->
+        <div id="roomLobby" class="hidden">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold mb-4">Room Lobby</h2>
+            <div class="bg-gray-100 p-4 rounded mb-4">
+              <div class="font-bold">Room ID: <span id="currentRoomId" class="text-purple-600"></span></div>
+              <div class="text-sm mt-2">Share this ID with your friends!</div>
+            </div>
+            <div class="mb-4">
+              <h3 class="font-bold mb-2">Players in Room:</h3>
+              <div id="playersInRoom" class="space-y-2"></div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button onclick="leaveRoom()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Leave Room</button>
+              <button onclick="startMultiplayerGame()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Start Game</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Character Selection Screen -->
-        <div id="characterSelect" class="character-select">
+        <div id="characterSelect" class="character-select hidden">
           <div class="mb-6">
             <p class="text-lg">Welcome to the realm of Nandigiri, where ancient prophecies, forgotten magic, and fierce brotherhood weave together the fate of a kingdom. Choose your character to begin your journey:</p>
           </div>
@@ -117,6 +173,14 @@
 
         <!-- Main Game Interface -->
         <div id="gameInterface" class="hidden">
+          <!-- Multiplayer Players Display -->
+          <div id="multiplayerPlayers" class="hidden mb-6">
+            <div class="bg-blue-100 p-4 rounded-lg border-2 border-blue-600">
+              <h3 class="font-bold text-lg mb-2">Other Players</h3>
+              <div id="otherPlayersDisplay" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+            </div>
+          </div>
+
           <!-- Player Stats -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="bg-white p-4 rounded-lg border-2 border-yellow-700">
@@ -235,7 +299,14 @@
     Your browser does not support the audio element.
   </audio>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script>
+    // Multiplayer state
+    let socket = null;
+    let currentRoom = null;
+    let otherPlayers = [];
+    let isMultiplayer = false;
+
     // Game State
     let gameState = {
       player: null,
@@ -391,15 +462,18 @@
         const enemyTypes = location.enemies;
         const enemyType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
         startCombat(enemyType);
+        broadcastAction('explore', `encountered a ${enemyType}`);
       } else if (randomEvent < 0.7) {
         // Find item or gold
         const foundGold = Math.floor(Math.random() * 20) + 5;
         gameState.player.gold += foundGold;
         updatePlayerDisplay();
         updateDialogue(`You found ${foundGold} gold while exploring!`);
+        broadcastAction('explore', `found ${foundGold} gold`);
       } else {
         // Story event
         updateDialogue('You explore the area but find nothing of interest. Perhaps you should try somewhere else.');
+        broadcastAction('explore', 'found nothing interesting');
       }
     }
 
@@ -435,6 +509,7 @@
       document.getElementById('locationDescription').textContent = location.description;
       
       updateDialogue(`You travel to ${location.name}. ${location.description}`);
+      broadcastAction('travel', `traveled to ${location.name}`);
     }
 
     function startCombat(enemyType) {
@@ -588,8 +663,191 @@
       document.getElementById('combatInterface').classList.add('hidden');
     }
 
+    // Multiplayer Functions
+    function initializeSocket() {
+      socket = io();
+      
+      socket.on('room-created', (data) => {
+        currentRoom = data.roomId;
+        document.getElementById('currentRoomId').textContent = currentRoom;
+        showRoomLobby();
+        updateDialogue(`Room ${currentRoom} created! Share this ID with your friends.`);
+      });
+      
+      socket.on('room-joined', (data) => {
+        currentRoom = data.roomId;
+        document.getElementById('currentRoomId').textContent = currentRoom;
+        updatePlayersInRoom(data.players);
+        showRoomLobby();
+        updateDialogue(`Joined room ${currentRoom}!`);
+      });
+      
+      socket.on('room-error', (data) => {
+        updateDialogue(`Error: ${data.message}`);
+      });
+      
+      socket.on('player-joined', (data) => {
+        updatePlayersInRoom(data.players);
+        updateDialogue(`${data.newPlayer.name} joined the room!`);
+      });
+      
+      socket.on('player-left', (data) => {
+        updatePlayersInRoom(data.players);
+        updateDialogue('A player left the room.');
+      });
+      
+      socket.on('player-action-update', (data) => {
+        updateDialogue(`${getPlayerName(data.socketId)} performed action: ${data.action}`);
+        updateOtherPlayersDisplay();
+      });
+      
+      socket.on('combat-update', (data) => {
+        updateDialogue(`${getPlayerName(data.socketId)} is in combat!`);
+      });
+    }
+
+    function startSinglePlayer() {
+      isMultiplayer = false;
+      showCharacterSelect();
+    }
+
+    function showMultiplayerOptions() {
+      initializeSocket();
+      document.getElementById('multiplayerMenu').classList.add('hidden');
+      document.getElementById('multiplayerOptions').classList.remove('hidden');
+    }
+
+    function createRoom() {
+      socket.emit('create-room', {});
+    }
+
+    function joinRoom() {
+      const roomId = document.getElementById('roomIdInput').value.toUpperCase();
+      if (roomId) {
+        isMultiplayer = true;
+        showCharacterSelect();
+        // Will join room after character selection
+        currentRoom = roomId;
+      } else {
+        updateDialogue('Please enter a room ID.');
+      }
+    }
+
+    function backToMainMenu() {
+      document.getElementById('multiplayerOptions').classList.add('hidden');
+      document.getElementById('multiplayerMenu').classList.remove('hidden');
+    }
+
+    function showRoomLobby() {
+      document.getElementById('multiplayerOptions').classList.add('hidden');
+      document.getElementById('roomLobby').classList.remove('hidden');
+    }
+
+    function showCharacterSelect() {
+      document.getElementById('multiplayerMenu').classList.add('hidden');
+      document.getElementById('multiplayerOptions').classList.add('hidden');
+      document.getElementById('roomLobby').classList.add('hidden');
+      document.getElementById('characterSelect').classList.remove('hidden');
+    }
+
+    function leaveRoom() {
+      if (socket) {
+        socket.disconnect();
+      }
+      currentRoom = null;
+      document.getElementById('roomLobby').classList.add('hidden');
+      document.getElementById('multiplayerMenu').classList.remove('hidden');
+    }
+
+    function startMultiplayerGame() {
+      if (gameState.player) {
+        document.getElementById('roomLobby').classList.add('hidden');
+        document.getElementById('gameInterface').classList.remove('hidden');
+        document.getElementById('multiplayerPlayers').classList.remove('hidden');
+        updateDialogue('Game started! You are now adventuring with your friends!');
+      } else {
+        updateDialogue('Please select a character first!');
+      }
+    }
+
+    function updatePlayersInRoom(players) {
+      const container = document.getElementById('playersInRoom');
+      container.innerHTML = '';
+      
+      players.forEach(player => {
+        const div = document.createElement('div');
+        div.className = 'bg-white p-2 rounded border';
+        div.innerHTML = `
+          <div class="font-bold">${player.name}</div>
+          <div class="text-sm text-gray-600">${player.class} - Level ${player.level}</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function updateOtherPlayersDisplay() {
+      if (!isMultiplayer) return;
+      
+      const container = document.getElementById('otherPlayersDisplay');
+      container.innerHTML = '';
+      
+      otherPlayers.forEach(player => {
+        const div = document.createElement('div');
+        div.className = 'bg-white p-2 rounded border text-sm';
+        div.innerHTML = `
+          <div class="font-bold">${player.name}</div>
+          <div>HP: ${player.hp}/${player.maxHp}</div>
+          <div>Level: ${player.level}</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function getPlayerName(socketId) {
+      const player = otherPlayers.find(p => p.socketId === socketId);
+      return player ? player.name : 'Unknown Player';
+    }
+
+    // Modified Functions for Multiplayer
+    function selectCharacter(name) {
+      gameState.player = { ...characters[name] };
+      
+      if (isMultiplayer && currentRoom) {
+        // Join room with character data
+        socket.emit('join-room', {
+          roomId: currentRoom,
+          playerData: gameState.player
+        });
+      } else if (isMultiplayer) {
+        showRoomLobby();
+      } else {
+        // Single player
+        document.getElementById('characterSelect').classList.add('hidden');
+        document.getElementById('gameInterface').classList.remove('hidden');
+        updatePlayerDisplay();
+        updateDialogue(`You have chosen ${name}, the ${gameState.player.class}. Your journey begins in the Village of Aravenhold. What will you do first?`);
+      }
+      
+      updatePlayerDisplay();
+    }
+
+    function broadcastAction(action, result) {
+      if (isMultiplayer && socket) {
+        socket.emit('player-action', {
+          action: action,
+          result: result,
+          playerState: {
+            hp: gameState.player.hp,
+            mp: gameState.player.mp,
+            level: gameState.player.level,
+            gold: gameState.player.gold
+          }
+        });
+      }
+    }
+
     // Initialize game
-    updateDialogue('Welcome to Chronicles of Nandigiri! Choose your character to begin your adventure.');
+    updateDialogue('Welcome to Chronicles of Nandigiri! Choose your game mode to begin your adventure.');
   </script>
 </body>
 </html>
