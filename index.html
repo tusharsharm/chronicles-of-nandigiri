@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chronicles of Nandigiri</title>
+  <title>Chronicles of Nandigiri - RPG</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body {
@@ -14,7 +15,7 @@
       font-family: 'Garamond', serif;
     }
     .scroll-frame {
-      background: rgba(255, 248, 220, 0.85);
+      background: rgba(255, 248, 220, 0.95);
       border: 10px solid #8B4513;
       padding: 1rem;
       border-radius: 1.5rem;
@@ -26,26 +27,206 @@
       border-radius: 1rem;
       border: 2px solid #6b4c2f;
       font-style: italic;
+      min-height: 100px;
+    }
+    .stat-bar {
+      background: #4a5568;
+      height: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .stat-fill {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    .hp-fill { background: #e53e3e; }
+    .mp-fill { background: #3182ce; }
+    .exp-fill { background: #38a169; }
+    .location-box {
+      background: #2d3748;
+      color: white;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .inventory-item {
+      background: #edf2f7;
+      border: 1px solid #cbd5e0;
+      padding: 0.25rem 0.5rem;
+      margin: 0.25rem;
+      border-radius: 0.25rem;
+      display: inline-block;
+      cursor: pointer;
+    }
+    .quest-item {
+      background: #fff5f5;
+      border: 1px solid #feb2b2;
+      padding: 0.5rem;
+      margin: 0.25rem 0;
+      border-radius: 0.5rem;
+    }
+    .combat-button {
+      background: #c53030;
+      color: white;
+      padding: 0.5rem 1rem;
+      margin: 0.25rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+    .combat-button:hover {
+      background: #9c1c1c;
     }
   </style>
 </head>
 <body class="text-gray-900">
   <div class="min-h-screen flex flex-col items-center justify-center p-8">
-    <div class="scroll-frame max-w-3xl w-full">
+    <div class="scroll-frame max-w-6xl w-full">
       <h1 class="text-4xl font-bold text-center text-yellow-900 mb-4">Chronicles of Nandigiri</h1>
-      <div class="mb-6">
-        <p class="text-lg">Welcome to the realm of Nandigiri, where ancient prophecies, forgotten magic, and fierce brotherhood weave together the fate of a kingdom. Choose a character to begin your journey:</p>
+      
+      <!-- Game State Display -->
+      <div id="gameState" class="mb-6">
+        <!-- Character Selection Screen -->
+        <div id="characterSelect" class="character-select">
+          <div class="mb-6">
+            <p class="text-lg">Welcome to the realm of Nandigiri, where ancient prophecies, forgotten magic, and fierce brotherhood weave together the fate of a kingdom. Choose your character to begin your journey:</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button onclick="selectCharacter('Auren Virel')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">
+              <div class="font-bold">Auren Virel</div>
+              <div class="text-sm">Paladin - High HP, Holy Magic</div>
+            </button>
+            <button onclick="selectCharacter('Kael Orynn')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">
+              <div class="font-bold">Kael Orynn</div>
+              <div class="text-sm">Mage - High MP, Arcane Spells</div>
+            </button>
+            <button onclick="selectCharacter('Thorne Blackroot')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">
+              <div class="font-bold">Thorne Blackroot</div>
+              <div class="text-sm">Rogue - High Agility, Stealth</div>
+            </button>
+            <button onclick="selectCharacter('Brimor the Bold')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">
+              <div class="font-bold">Brimor the Bold</div>
+              <div class="text-sm">Warrior - High Attack, Defense</div>
+            </button>
+            <button onclick="selectCharacter('Sylvahn Daro')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">
+              <div class="font-bold">Sylvahn Daro</div>
+              <div class="text-sm">Ranger - Balanced, Nature Magic</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Game Interface -->
+        <div id="gameInterface" class="hidden">
+          <!-- Player Stats -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-lg border-2 border-yellow-700">
+              <h3 class="font-bold text-lg mb-2" id="playerName">Character</h3>
+              <div class="mb-2">
+                <div class="flex justify-between">
+                  <span>HP:</span>
+                  <span id="hpText">100/100</span>
+                </div>
+                <div class="stat-bar">
+                  <div class="stat-fill hp-fill" id="hpBar" style="width: 100%"></div>
+                </div>
+              </div>
+              <div class="mb-2">
+                <div class="flex justify-between">
+                  <span>MP:</span>
+                  <span id="mpText">50/50</span>
+                </div>
+                <div class="stat-bar">
+                  <div class="stat-fill mp-fill" id="mpBar" style="width: 100%"></div>
+                </div>
+              </div>
+              <div class="mb-2">
+                <div class="flex justify-between">
+                  <span>Level:</span>
+                  <span id="levelText">1</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>EXP:</span>
+                  <span id="expText">0/100</span>
+                </div>
+                <div class="stat-bar">
+                  <div class="stat-fill exp-fill" id="expBar" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="text-sm">
+                <div>Gold: <span id="goldText" class="text-yellow-600 font-bold">100</span></div>
+              </div>
+            </div>
+            
+            <!-- Inventory -->
+            <div class="bg-white p-4 rounded-lg border-2 border-yellow-700">
+              <h3 class="font-bold text-lg mb-2">Inventory</h3>
+              <div id="inventory" class="text-sm">
+                <div class="inventory-item">Iron Sword</div>
+                <div class="inventory-item">Health Potion x3</div>
+                <div class="inventory-item">Leather Armor</div>
+              </div>
+            </div>
+            
+            <!-- Quests -->
+            <div class="bg-white p-4 rounded-lg border-2 border-yellow-700">
+              <h3 class="font-bold text-lg mb-2">Quests</h3>
+              <div id="questLog" class="text-sm">
+                <div class="quest-item">
+                  <div class="font-bold">The Missing Artifact</div>
+                  <div>Find the lost Crystal of Aravenhold</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Location and Actions -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <div class="location-box">
+                <h3 class="font-bold text-lg">Current Location</h3>
+                <div id="currentLocation">Village of Aravenhold</div>
+                <div id="locationDescription" class="text-sm mt-2">A peaceful village nestled in the shadow of ancient mountains. The people here speak of strange happenings in the nearby ruins.</div>
+              </div>
+              
+              <!-- Action Buttons -->
+              <div class="grid grid-cols-2 gap-2 mb-4">
+                <button onclick="explore()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Explore</button>
+                <button onclick="rest()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Rest</button>
+                <button onclick="shop()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Shop</button>
+                <button onclick="travel()" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">Travel</button>
+              </div>
+            </div>
+            
+            <!-- Combat Interface -->
+            <div id="combatInterface" class="hidden">
+              <div class="bg-red-100 p-4 rounded-lg border-2 border-red-600">
+                <h3 class="font-bold text-lg text-red-700 mb-2">Combat!</h3>
+                <div id="enemyInfo" class="mb-4">
+                  <div class="font-bold" id="enemyName">Goblin</div>
+                  <div class="flex justify-between">
+                    <span>Enemy HP:</span>
+                    <span id="enemyHp">30/30</span>
+                  </div>
+                  <div class="stat-bar">
+                    <div class="stat-fill hp-fill" id="enemyHpBar" style="width: 100%"></div>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <button onclick="attack()" class="combat-button">Attack</button>
+                  <button onclick="useSkill()" class="combat-button">Use Skill</button>
+                  <button onclick="useItem()" class="combat-button">Use Item</button>
+                  <button onclick="flee()" class="combat-button">Flee</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <button onclick="talk('Auren Virel')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">Auren Virel</button>
-        <button onclick="talk('Kael Orynn')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">Kael Orynn</button>
-        <button onclick="talk('Thorne Blackroot')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">Thorne Blackroot</button>
-        <button onclick="talk('Brimor the Bold')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">Brimor the Bold</button>
-        <button onclick="talk('Sylvahn Daro')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">Sylvahn Daro</button>
+      <!-- Dialogue Box -->
+      <div id="dialogue" class="dialogue-box">
+        Welcome to Chronicles of Nandigiri! Choose your character to begin your adventure.
       </div>
-
-      <div id="dialogue" class="dialogue-box mt-6 hidden"></div>
     </div>
   </div>
 
@@ -55,19 +236,360 @@
   </audio>
 
   <script>
-    const dialogues = {
-      'Auren Virel': "'By the light of Aravenhold, I will guard this realm. Speak, traveler — what truth do you seek?'",
-      'Kael Orynn': "'Hmph. Another seeker of forbidden knowledge? Let’s hope your mind can handle the weight.'",
-      'Thorne Blackroot': "*A slight nod. A glimmer of steel.* 'Talk’s cheap. What do you want?'",
-      'Brimor the Bold': "'HA! You look like someone ready to fight beside a legend. Or die trying.'",
-      'Sylvahn Daro': "'The trees whisper your name, wanderer. Will you listen to the wind, or be consumed by it?'"
+    // Game State
+    let gameState = {
+      player: null,
+      location: 'Village of Aravenhold',
+      inCombat: false,
+      currentEnemy: null,
+      quests: [
+        { name: 'The Missing Artifact', description: 'Find the lost Crystal of Aravenhold', completed: false }
+      ]
     };
 
-    function talk(name) {
-      const box = document.getElementById('dialogue');
-      box.innerText = dialogues[name];
-      box.classList.remove('hidden');
+    // Character Classes
+    const characters = {
+      'Auren Virel': {
+        name: 'Auren Virel',
+        class: 'Paladin',
+        level: 1,
+        hp: 120, maxHp: 120,
+        mp: 40, maxMp: 40,
+        attack: 15, defense: 12,
+        exp: 0, expToNext: 100,
+        gold: 100,
+        inventory: ['Iron Sword', 'Health Potion', 'Health Potion', 'Health Potion', 'Leather Armor'],
+        skills: ['Holy Strike', 'Heal']
+      },
+      'Kael Orynn': {
+        name: 'Kael Orynn',
+        class: 'Mage',
+        level: 1,
+        hp: 80, maxHp: 80,
+        mp: 100, maxMp: 100,
+        attack: 8, defense: 6,
+        exp: 0, expToNext: 100,
+        gold: 100,
+        inventory: ['Magic Staff', 'Mana Potion', 'Mana Potion', 'Health Potion', 'Cloth Robes'],
+        skills: ['Fireball', 'Ice Shard']
+      },
+      'Thorne Blackroot': {
+        name: 'Thorne Blackroot',
+        class: 'Rogue',
+        level: 1,
+        hp: 90, maxHp: 90,
+        mp: 60, maxMp: 60,
+        attack: 18, defense: 8,
+        exp: 0, expToNext: 100,
+        gold: 150,
+        inventory: ['Steel Dagger', 'Poison Vial', 'Health Potion', 'Health Potion', 'Leather Armor'],
+        skills: ['Backstab', 'Stealth']
+      },
+      'Brimor the Bold': {
+        name: 'Brimor the Bold',
+        class: 'Warrior',
+        level: 1,
+        hp: 140, maxHp: 140,
+        mp: 30, maxMp: 30,
+        attack: 20, defense: 15,
+        exp: 0, expToNext: 100,
+        gold: 80,
+        inventory: ['Battle Axe', 'Health Potion', 'Health Potion', 'Health Potion', 'Chain Mail'],
+        skills: ['Rage', 'Shield Bash']
+      },
+      'Sylvahn Daro': {
+        name: 'Sylvahn Daro',
+        class: 'Ranger',
+        level: 1,
+        hp: 100, maxHp: 100,
+        mp: 70, maxMp: 70,
+        attack: 14, defense: 10,
+        exp: 0, expToNext: 100,
+        gold: 120,
+        inventory: ['Elven Bow', 'Healing Herb', 'Healing Herb', 'Healing Herb', 'Leather Armor'],
+        skills: ['Arrow Shot', 'Nature\'s Blessing']
+      }
+    };
+
+    const enemies = {
+      'Goblin': { name: 'Goblin', hp: 30, maxHp: 30, attack: 8, defense: 3, exp: 25, gold: 15 },
+      'Orc': { name: 'Orc', hp: 60, maxHp: 60, attack: 12, defense: 6, exp: 50, gold: 30 },
+      'Skeleton': { name: 'Skeleton', hp: 40, maxHp: 40, attack: 10, defense: 5, exp: 35, gold: 20 },
+      'Dark Mage': { name: 'Dark Mage', hp: 50, maxHp: 50, attack: 15, defense: 4, exp: 75, gold: 50 }
+    };
+
+    const locations = {
+      'Village of Aravenhold': {
+        name: 'Village of Aravenhold',
+        description: 'A peaceful village nestled in the shadow of ancient mountains. The people here speak of strange happenings in the nearby ruins.',
+        canShop: true,
+        enemies: ['Goblin']
+      },
+      'Ancient Ruins': {
+        name: 'Ancient Ruins',
+        description: 'Crumbling stone structures covered in mysterious runes. Dark magic seems to emanate from the deeper chambers.',
+        canShop: false,
+        enemies: ['Skeleton', 'Dark Mage']
+      },
+      'Forest Path': {
+        name: 'Forest Path',
+        description: 'A winding path through dense woodland. Strange sounds echo from the shadows between the trees.',
+        canShop: false,
+        enemies: ['Goblin', 'Orc']
+      }
+    };
+
+    function selectCharacter(name) {
+      gameState.player = { ...characters[name] };
+      updateDisplay('character-selected');
+      document.getElementById('characterSelect').classList.add('hidden');
+      document.getElementById('gameInterface').classList.remove('hidden');
+      updatePlayerDisplay();
+      updateDialogue(`You have chosen ${name}, the ${gameState.player.class}. Your journey begins in the Village of Aravenhold. What will you do first?`);
     }
+
+    function updatePlayerDisplay() {
+      const player = gameState.player;
+      document.getElementById('playerName').textContent = `${player.name} (Level ${player.level} ${player.class})`;
+      document.getElementById('hpText').textContent = `${player.hp}/${player.maxHp}`;
+      document.getElementById('mpText').textContent = `${player.mp}/${player.maxMp}`;
+      document.getElementById('levelText').textContent = player.level;
+      document.getElementById('expText').textContent = `${player.exp}/${player.expToNext}`;
+      document.getElementById('goldText').textContent = player.gold;
+      
+      // Update bars
+      document.getElementById('hpBar').style.width = `${(player.hp / player.maxHp) * 100}%`;
+      document.getElementById('mpBar').style.width = `${(player.mp / player.maxMp) * 100}%`;
+      document.getElementById('expBar').style.width = `${(player.exp / player.expToNext) * 100}%`;
+      
+      // Update inventory
+      const inventory = document.getElementById('inventory');
+      inventory.innerHTML = '';
+      const itemCounts = {};
+      player.inventory.forEach(item => {
+        itemCounts[item] = (itemCounts[item] || 0) + 1;
+      });
+      
+      Object.entries(itemCounts).forEach(([item, count]) => {
+        const div = document.createElement('div');
+        div.className = 'inventory-item';
+        div.textContent = count > 1 ? `${item} x${count}` : item;
+        inventory.appendChild(div);
+      });
+    }
+
+    function updateDialogue(text) {
+      document.getElementById('dialogue').textContent = text;
+    }
+
+    function explore() {
+      const location = locations[gameState.location];
+      const randomEvent = Math.random();
+      
+      if (randomEvent < 0.4) {
+        // Combat encounter
+        const enemyTypes = location.enemies;
+        const enemyType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+        startCombat(enemyType);
+      } else if (randomEvent < 0.7) {
+        // Find item or gold
+        const foundGold = Math.floor(Math.random() * 20) + 5;
+        gameState.player.gold += foundGold;
+        updatePlayerDisplay();
+        updateDialogue(`You found ${foundGold} gold while exploring!`);
+      } else {
+        // Story event
+        updateDialogue('You explore the area but find nothing of interest. Perhaps you should try somewhere else.');
+      }
+    }
+
+    function rest() {
+      if (gameState.player.gold >= 10) {
+        gameState.player.hp = gameState.player.maxHp;
+        gameState.player.mp = gameState.player.maxMp;
+        gameState.player.gold -= 10;
+        updatePlayerDisplay();
+        updateDialogue('You rest at the local inn. Your HP and MP are fully restored! (Cost: 10 gold)');
+      } else {
+        updateDialogue('You don\'t have enough gold to rest at the inn. (Cost: 10 gold)');
+      }
+    }
+
+    function shop() {
+      const location = locations[gameState.location];
+      if (location.canShop) {
+        updateDialogue('Shop: Health Potion (20g) - Mana Potion (15g) - Better Weapon (100g). Say what you want to buy!');
+      } else {
+        updateDialogue('There are no shops in this location.');
+      }
+    }
+
+    function travel() {
+      const locationNames = Object.keys(locations);
+      const otherLocations = locationNames.filter(loc => loc !== gameState.location);
+      const newLocation = otherLocations[Math.floor(Math.random() * otherLocations.length)];
+      
+      gameState.location = newLocation;
+      const location = locations[newLocation];
+      document.getElementById('currentLocation').textContent = location.name;
+      document.getElementById('locationDescription').textContent = location.description;
+      
+      updateDialogue(`You travel to ${location.name}. ${location.description}`);
+    }
+
+    function startCombat(enemyType) {
+      gameState.inCombat = true;
+      gameState.currentEnemy = { ...enemies[enemyType] };
+      
+      document.getElementById('combatInterface').classList.remove('hidden');
+      document.getElementById('enemyName').textContent = gameState.currentEnemy.name;
+      updateEnemyDisplay();
+      
+      updateDialogue(`A ${gameState.currentEnemy.name} appears! Prepare for battle!`);
+    }
+
+    function updateEnemyDisplay() {
+      const enemy = gameState.currentEnemy;
+      document.getElementById('enemyHp').textContent = `${enemy.hp}/${enemy.maxHp}`;
+      document.getElementById('enemyHpBar').style.width = `${(enemy.hp / enemy.maxHp) * 100}%`;
+    }
+
+    function attack() {
+      if (!gameState.inCombat) return;
+      
+      const player = gameState.player;
+      const enemy = gameState.currentEnemy;
+      
+      // Player attacks
+      const damage = Math.max(1, player.attack - enemy.defense + Math.floor(Math.random() * 5));
+      enemy.hp -= damage;
+      
+      let message = `You attack for ${damage} damage! `;
+      
+      if (enemy.hp <= 0) {
+        // Enemy defeated
+        message += `${enemy.name} is defeated! `;
+        player.exp += enemy.exp;
+        player.gold += enemy.gold;
+        message += `You gain ${enemy.exp} EXP and ${enemy.gold} gold!`;
+        
+        // Check for level up
+        if (player.exp >= player.expToNext) {
+          player.level++;
+          player.exp -= player.expToNext;
+          player.expToNext = Math.floor(player.expToNext * 1.5);
+          player.maxHp += 10;
+          player.hp = player.maxHp;
+          player.maxMp += 5;
+          player.mp = player.maxMp;
+          message += ` Level up! You are now level ${player.level}!`;
+        }
+        
+        endCombat();
+      } else {
+        // Enemy attacks back
+        const enemyDamage = Math.max(1, enemy.attack - player.defense + Math.floor(Math.random() * 3));
+        player.hp -= enemyDamage;
+        message += `${enemy.name} attacks you for ${enemyDamage} damage!`;
+        
+        if (player.hp <= 0) {
+          message += ' You have been defeated!';
+          player.hp = 1;
+          player.gold = Math.floor(player.gold * 0.8);
+          endCombat();
+        }
+      }
+      
+      updatePlayerDisplay();
+      updateEnemyDisplay();
+      updateDialogue(message);
+    }
+
+    function useSkill() {
+      if (!gameState.inCombat) return;
+      
+      const player = gameState.player;
+      const skills = player.skills;
+      
+      if (player.mp < 10) {
+        updateDialogue('Not enough MP to use a skill!');
+        return;
+      }
+      
+      player.mp -= 10;
+      const skill = skills[Math.floor(Math.random() * skills.length)];
+      
+      let message = `You use ${skill}! `;
+      
+      if (skill.includes('Heal') || skill.includes('Blessing')) {
+        const healing = Math.floor(Math.random() * 20) + 15;
+        player.hp = Math.min(player.maxHp, player.hp + healing);
+        message += `You recover ${healing} HP!`;
+      } else {
+        const damage = Math.floor(Math.random() * 15) + player.attack;
+        gameState.currentEnemy.hp -= damage;
+        message += `${skill} deals ${damage} damage!`;
+        
+        if (gameState.currentEnemy.hp <= 0) {
+          message += ` ${gameState.currentEnemy.name} is defeated!`;
+          endCombat();
+        }
+      }
+      
+      updatePlayerDisplay();
+      updateEnemyDisplay();
+      updateDialogue(message);
+    }
+
+    function useItem() {
+      if (!gameState.inCombat) return;
+      
+      const player = gameState.player;
+      const potions = player.inventory.filter(item => item.includes('Potion') || item.includes('Herb'));
+      
+      if (potions.length === 0) {
+        updateDialogue('No usable items in combat!');
+        return;
+      }
+      
+      const item = potions[0];
+      const index = player.inventory.indexOf(item);
+      player.inventory.splice(index, 1);
+      
+      if (item.includes('Health') || item.includes('Healing')) {
+        const healing = Math.floor(Math.random() * 30) + 20;
+        player.hp = Math.min(player.maxHp, player.hp + healing);
+        updateDialogue(`You use ${item} and recover ${healing} HP!`);
+      } else if (item.includes('Mana')) {
+        const manaRestore = Math.floor(Math.random() * 20) + 15;
+        player.mp = Math.min(player.maxMp, player.mp + manaRestore);
+        updateDialogue(`You use ${item} and recover ${manaRestore} MP!`);
+      }
+      
+      updatePlayerDisplay();
+    }
+
+    function flee() {
+      if (Math.random() < 0.7) {
+        updateDialogue('You successfully flee from combat!');
+        endCombat();
+      } else {
+        updateDialogue('You failed to escape! The enemy attacks!');
+        // Enemy gets a free attack
+        const enemyDamage = Math.max(1, gameState.currentEnemy.attack - gameState.player.defense);
+        gameState.player.hp -= enemyDamage;
+        updatePlayerDisplay();
+      }
+    }
+
+    function endCombat() {
+      gameState.inCombat = false;
+      gameState.currentEnemy = null;
+      document.getElementById('combatInterface').classList.add('hidden');
+    }
+
+    // Initialize game
+    updateDialogue('Welcome to Chronicles of Nandigiri! Choose your character to begin your adventure.');
   </script>
 </body>
 </html>
