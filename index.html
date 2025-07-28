@@ -77,6 +77,48 @@
     .combat-button:hover {
       background: #9c1c1c;
     }
+    .character-card {
+      background: rgba(255, 248, 220, 0.95);
+      border: 3px solid #8B4513;
+      border-radius: 1rem;
+      padding: 1rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .character-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border-color: #FFD700;
+    }
+    .character-image {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+      border: 2px solid #8B4513;
+    }
+    .character-placeholder {
+      width: 100%;
+      height: 150px;
+      background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+      border: 2px solid #8B4513;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    .character-stats {
+      font-size: 0.75rem;
+      color: #4a5568;
+      margin-top: 0.5rem;
+    }
   </style>
 </head>
 <body class="text-gray-900">
@@ -147,27 +189,8 @@
           <div class="mb-6">
             <p class="text-lg">Welcome to the realm of Nandigiri, where ancient prophecies, forgotten magic, and fierce brotherhood weave together the fate of a kingdom. Choose your character to begin your journey:</p>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button onclick="selectCharacter('Auren Virel')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">
-              <div class="font-bold">Auren Virel</div>
-              <div class="text-sm">Paladin - High HP, Holy Magic</div>
-            </button>
-            <button onclick="selectCharacter('Kael Orynn')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">
-              <div class="font-bold">Kael Orynn</div>
-              <div class="text-sm">Mage - High MP, Arcane Spells</div>
-            </button>
-            <button onclick="selectCharacter('Thorne Blackroot')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">
-              <div class="font-bold">Thorne Blackroot</div>
-              <div class="text-sm">Rogue - High Agility, Stealth</div>
-            </button>
-            <button onclick="selectCharacter('Brimor the Bold')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">
-              <div class="font-bold">Brimor the Bold</div>
-              <div class="text-sm">Warrior - High Attack, Defense</div>
-            </button>
-            <button onclick="selectCharacter('Sylvahn Daro')" class="bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-800">
-              <div class="font-bold">Sylvahn Daro</div>
-              <div class="text-sm">Ranger - Balanced, Nature Magic</div>
-            </button>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="characterGrid">
+            <!-- Characters will be dynamically loaded here -->
           </div>
         </div>
 
@@ -300,6 +323,7 @@
   </audio>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script src="characters.js"></script>
   <script>
     // Multiplayer state
     let socket = null;
@@ -318,69 +342,8 @@
       ]
     };
 
-    // Character Classes
-    const characters = {
-      'Auren Virel': {
-        name: 'Auren Virel',
-        class: 'Paladin',
-        level: 1,
-        hp: 120, maxHp: 120,
-        mp: 40, maxMp: 40,
-        attack: 15, defense: 12,
-        exp: 0, expToNext: 100,
-        gold: 100,
-        inventory: ['Iron Sword', 'Health Potion', 'Health Potion', 'Health Potion', 'Leather Armor'],
-        skills: ['Holy Strike', 'Heal']
-      },
-      'Kael Orynn': {
-        name: 'Kael Orynn',
-        class: 'Mage',
-        level: 1,
-        hp: 80, maxHp: 80,
-        mp: 100, maxMp: 100,
-        attack: 8, defense: 6,
-        exp: 0, expToNext: 100,
-        gold: 100,
-        inventory: ['Magic Staff', 'Mana Potion', 'Mana Potion', 'Health Potion', 'Cloth Robes'],
-        skills: ['Fireball', 'Ice Shard']
-      },
-      'Thorne Blackroot': {
-        name: 'Thorne Blackroot',
-        class: 'Rogue',
-        level: 1,
-        hp: 90, maxHp: 90,
-        mp: 60, maxMp: 60,
-        attack: 18, defense: 8,
-        exp: 0, expToNext: 100,
-        gold: 150,
-        inventory: ['Steel Dagger', 'Poison Vial', 'Health Potion', 'Health Potion', 'Leather Armor'],
-        skills: ['Backstab', 'Stealth']
-      },
-      'Brimor the Bold': {
-        name: 'Brimor the Bold',
-        class: 'Warrior',
-        level: 1,
-        hp: 140, maxHp: 140,
-        mp: 30, maxMp: 30,
-        attack: 20, defense: 15,
-        exp: 0, expToNext: 100,
-        gold: 80,
-        inventory: ['Battle Axe', 'Health Potion', 'Health Potion', 'Health Potion', 'Chain Mail'],
-        skills: ['Rage', 'Shield Bash']
-      },
-      'Sylvahn Daro': {
-        name: 'Sylvahn Daro',
-        class: 'Ranger',
-        level: 1,
-        hp: 100, maxHp: 100,
-        mp: 70, maxMp: 70,
-        attack: 14, defense: 10,
-        exp: 0, expToNext: 100,
-        gold: 120,
-        inventory: ['Elven Bow', 'Healing Herb', 'Healing Herb', 'Healing Herb', 'Leather Armor'],
-        skills: ['Arrow Shot', 'Nature\'s Blessing']
-      }
-    };
+    // Character Classes (loaded from characters.js)
+    const characters = characterDatabase;
 
     const enemies = {
       'Goblin': { name: 'Goblin', hp: 30, maxHp: 30, attack: 8, defense: 3, exp: 25, gold: 15 },
@@ -748,6 +711,7 @@
       document.getElementById('multiplayerOptions').classList.add('hidden');
       document.getElementById('roomLobby').classList.add('hidden');
       document.getElementById('characterSelect').classList.remove('hidden');
+      loadCharacterGrid();
     }
 
     function leaveRoom() {
@@ -809,6 +773,35 @@
     }
 
     // Modified Functions for Multiplayer
+    function loadCharacterGrid() {
+      const grid = document.getElementById('characterGrid');
+      grid.innerHTML = '';
+      
+      Object.entries(characters).forEach(([name, character]) => {
+        const card = document.createElement('div');
+        card.className = 'character-card';
+        card.onclick = () => selectCharacter(name);
+        
+        const imageElement = character.image ? 
+          `<img src="${character.image}" alt="${character.name}" class="character-image" onerror="this.outerHTML='<div class=\\'character-placeholder\\'>Image not found<br>Add your image here</div>'">` :
+          `<div class="character-placeholder">Upload your<br>character image</div>`;
+        
+        card.innerHTML = `
+          ${imageElement}
+          <div class="font-bold text-lg">${character.name}</div>
+          <div class="text-sm text-yellow-800 font-semibold">${character.class}</div>
+          <div class="text-xs mt-2">${character.description}</div>
+          <div class="character-stats">
+            <div>HP: ${character.maxHp} | MP: ${character.maxMp}</div>
+            <div>ATK: ${character.attack} | DEF: ${character.defense}</div>
+            <div>Gold: ${character.gold}</div>
+          </div>
+        `;
+        
+        grid.appendChild(card);
+      });
+    }
+
     function selectCharacter(name) {
       gameState.player = { ...characters[name] };
       
