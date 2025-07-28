@@ -1,0 +1,403 @@
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial', sans-serif;
+  background: #000;
+  overflow: hidden;
+}
+
+#gameCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+#ui-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.ui-panel {
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid #00ff00;
+  border-radius: 10px;
+  padding: 15px;
+  color: white;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+.menu-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, rgba(0, 20, 40, 0.95), rgba(0, 0, 0, 0.95));
+  border: 3px solid #00ff00;
+  border-radius: 15px;
+  padding: 30px;
+  text-align: center;
+  min-width: 400px;
+  pointer-events: auto;
+  box-shadow: 0 0 30px rgba(0, 255, 0, 0.4);
+}
+
+.player-list {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.task-list {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 250px;
+}
+
+.emergency-button {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(45deg, #ff0000, #cc0000);
+  color: white;
+  border: none;
+  padding: 15px 25px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 0, 0, 0.5);
+  transition: all 0.3s ease;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.emergency-button:hover {
+  background: linear-gradient(45deg, #cc0000, #ff0000);
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 6px 20px rgba(255, 0, 0, 0.7);
+}
+
+.chat-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 350px;
+  height: 120px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid #00ff00;
+  border-radius: 10px;
+  padding: 10px;
+  color: white;
+  overflow-y: auto;
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+}
+
+.action-button {
+  background: linear-gradient(45deg, #00ff00, #008800);
+  color: #000;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  margin: 5px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 10px rgba(0, 255, 0, 0.3);
+}
+
+.action-button:hover {
+  background: linear-gradient(45deg, #008800, #00ff00);
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(0, 255, 0, 0.5);
+}
+
+.action-button:disabled {
+  background: #555;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.impostor-button {
+  background: linear-gradient(45deg, #ff0000, #aa0000);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  margin: 5px;
+  box-shadow: 0 4px 10px rgba(255, 0, 0, 0.3);
+}
+
+.impostor-button:hover {
+  background: linear-gradient(45deg, #aa0000, #ff0000);
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(255, 0, 0, 0.5);
+}
+
+.impostor-button:disabled {
+  background: #555;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.player-card {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid #00ff00;
+  border-radius: 8px;
+  padding: 8px;
+  margin: 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.player-card:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(5px);
+}
+
+.player-alive {
+  border-color: #00ff00;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+}
+
+.player-dead {
+  border-color: #ff0000;
+  opacity: 0.5;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+}
+
+.player-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.task-item {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #00ff00;
+  border-radius: 5px;
+  padding: 8px;
+  margin: 5px 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.task-item:hover {
+  background: rgba(0, 255, 0, 0.1);
+  transform: translateX(5px);
+}
+
+.task-completed {
+  background: rgba(0, 255, 0, 0.2);
+  border-color: #00ff00;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.voting-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, rgba(40, 0, 0, 0.95), rgba(0, 0, 0, 0.95));
+  border: 3px solid #ff0000;
+  border-radius: 15px;
+  padding: 30px;
+  min-width: 500px;
+  pointer-events: auto;
+  box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+}
+
+.vote-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid #666;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 5px 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.vote-option:hover {
+  border-color: #ff0000;
+  background: rgba(255, 0, 0, 0.1);
+  transform: translateX(5px);
+}
+
+.vote-option.selected {
+  border-color: #ff0000;
+  background: rgba(255, 0, 0, 0.2);
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+}
+
+.hidden { 
+  display: none !important; 
+}
+
+.crewmate-win {
+  background: linear-gradient(45deg, #00ff00, #0088ff);
+}
+
+.impostor-win {
+  background: linear-gradient(45deg, #ff0000, #ff4444);
+}
+
+/* Game title styling */
+.game-title {
+  background: linear-gradient(45deg, #00ff00, #ffff00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+}
+
+/* Input field styling */
+input[type="text"], input[type="number"] {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid #00ff00;
+  border-radius: 8px;
+  padding: 10px;
+  color: white;
+  font-size: 16px;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+input[type="text"]:focus, input[type="number"]:focus {
+  outline: none;
+  border-color: #ffff00;
+  box-shadow: 0 0 15px rgba(255, 255, 0, 0.3);
+}
+
+input[type="text"]::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Progress bar styling */
+.progress-bar {
+  background: #333;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 8px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ff00, #ffff00);
+  transition: width 0.5s ease;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, #00ff00, #008800);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, #008800, #00ff00);
+}
+
+/* Animation keyframes */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.8); }
+  100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5); }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+.glow {
+  animation: glow 2s infinite;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .menu-panel {
+    min-width: 90%;
+    padding: 20px;
+  }
+  
+  .voting-panel {
+    min-width: 90%;
+    padding: 20px;
+  }
+  
+  .player-list, .task-list {
+    width: 180px;
+  }
+  
+  .chat-panel {
+    width: 300px;
+    height: 100px;
+  }
+}
+
+/* Impostor UI styling */
+#impostorActions {
+  position: absolute;
+  bottom: 60px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Emergency meeting effects */
+.emergency-active {
+  animation: pulse 1s infinite;
+  background: linear-gradient(45deg, #ff0000, #ffaa00) !important;
+}
+
+/* Task completion effect */
+.task-complete-effect {
+  background: linear-gradient(45deg, #00ff00, #00ffff) !important;
+  animation: glow 0.5s ease-out;
+}
